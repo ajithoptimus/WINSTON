@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ShieldAlert, Save, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldAlert, Save, Download, ChevronDown, ChevronUp, Sparkles, Cpu, AlertTriangle, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { db, getTodayDateStr, DebriefEntry } from '@/lib/db';
 import { playCompletionChime } from '@/lib/audio';
+import { analyzeDebriefWithAI, DebriefAnalysisResult } from '@/lib/ai';
 
 interface NightlyTakhkirCardProps {
   completed: boolean;
@@ -24,11 +25,28 @@ export default function NightlyTakhkirCard({ completed, onToggleComplete, onRefr
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const [isSaved, setIsSaved] = useState<boolean>(false);
 
+  // AI Telemetry State
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [aiResult, setAiResult] = useState<DebriefAnalysisResult | null>(null);
+
   const toggleChip = (chip: string) => {
     if (selectedChips.includes(chip)) {
       setSelectedChips(selectedChips.filter(c => c !== chip));
     } else {
       setSelectedChips([...selectedChips, chip]);
+    }
+  };
+
+  const handleAIRefine = async () => {
+    setIsAnalyzing(true);
+    try {
+      const result = await analyzeDebriefWithAI(targetObjective, groundTruth, frictionPoint, singleRuleAdjustment);
+      setAiResult(result);
+      setSingleRuleAdjustment(result.sharpenedRule);
+    } catch (e) {
+      console.warn('AI analysis error', e);
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -69,8 +87,11 @@ ${groundTruth || 'N/A'}
 ## Point of Friction
 ${frictionPoint || 'N/A'}
 
-## Single Rule Adjustment
+## Single Rule Adjustment (AI Sharpened)
 ${singleRuleAdjustment || 'N/A'}
+
+## AI Cognitive Precision Score
+${aiResult ? `${aiResult.accuracyScore}%` : 'N/A'}
 
 ## Verified Track Chips
 ${selectedChips.map(c => `- [x] ${c}`).join('\n')}
@@ -104,6 +125,9 @@ ${selectedChips.map(c => `- [x] ${c}`).join('\n')}
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono tracking-widest text-[#e38b6c] uppercase font-bold">09:30 PM • DIRECTIVE 05</span>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/[0.05] text-[#e38b6c] border border-[#e38b6c]/30 flex items-center gap-1">
+                <Cpu className="w-2.5 h-2.5" /> AI ENGINE
+              </span>
             </div>
             <h2 className="font-bold text-base text-[#f0f0f0] tracking-wide">Nightly Takhkir</h2>
           </div>
@@ -117,7 +141,7 @@ ${selectedChips.map(c => `- [x] ${c}`).join('\n')}
         </button>
       </div>
 
-      <p className="text-xs text-[#a0a0a0] mb-4">Ego-free operational debrief vault & single non-negotiable rule adjustment.</p>
+      <p className="text-xs text-[#a0a0a0] mb-4">Ego-free operational debrief vault & AI accuracy rule sharpening engine.</p>
 
       {isExpanded && (
         <div className="space-y-3.5">
@@ -156,15 +180,63 @@ ${selectedChips.map(c => `- [x] ${c}`).join('\n')}
           </div>
 
           <div>
-            <label className="block text-[11px] font-mono text-[#e38b6c] mb-1 font-bold uppercase">4. SINGLE RULE ADJUSTMENT (NON-NEGOTIABLE FOR TOMORROW)</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] font-mono text-[#e38b6c] font-bold uppercase">4. SINGLE RULE ADJUSTMENT</label>
+              
+              {/* AI Refine Button */}
+              <button
+                type="button"
+                onClick={handleAIRefine}
+                disabled={isAnalyzing}
+                className="px-2.5 py-1 rounded text-[10px] font-mono btn-blick-primary flex items-center gap-1 shadow-sm"
+              >
+                <Sparkles className="w-3 h-3 text-white" />
+                <span>{isAnalyzing ? 'ANALYZING...' : 'AI ACCURACY SHARPEN'}</span>
+              </button>
+            </div>
+
             <input
               type="text"
               value={singleRuleAdjustment}
               onChange={(e) => setSingleRuleAdjustment(e.target.value)}
-              placeholder="e.g. Initiate 3-second shoulder check immediately upon entering sports pitch."
-              className="w-full px-3 py-2 rounded-lg bg-[#080808] border border-[#222222] text-xs text-[#f0f0f0] outline-none focus:border-[#e38b6c] transition"
+              placeholder="e.g. If encountering hesitation, immediately pause 3s for physical reset."
+              className="w-full px-3 py-2 rounded-lg bg-[#080808] border border-[#222222] text-xs text-[#f0f0f0] outline-none focus:border-[#e38b6c] transition font-mono"
             />
           </div>
+
+          {/* AI Telemetry Result Banner */}
+          <AnimatePresence>
+            {aiResult && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-3 rounded-lg bg-[#080808] border border-[#e38b6c]/30 space-y-2"
+              >
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-[#e38b6c] font-bold flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 text-[#e38b6c]" /> AI ACCURACY SCORE:
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-[#e38b6c]/20 text-[#e38b6c] font-bold border border-[#e38b6c]/40">
+                    {aiResult.accuracyScore}% PRECISION
+                  </span>
+                </div>
+
+                {aiResult.biasDetected && (
+                  <div className="text-[11px] font-mono text-amber-400 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>Bias: {aiResult.biasDetected}</span>
+                  </div>
+                )}
+
+                <ul className="text-[11px] text-[#a0a0a0] space-y-1 pl-4 list-disc marker:text-[#e38b6c]">
+                  {aiResult.insights.map((insight, idx) => (
+                    <li key={idx}>{insight}</li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Track Completion Chips */}
           <div>
