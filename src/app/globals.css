@@ -2,7 +2,7 @@
 
 @layer base {
   :root {
-    --background: #07090E;
+    --background: #080808;
     --foreground: #F3F4F6;
   }
 
@@ -16,75 +16,71 @@
   }
 }
 
-/* Glassmorphism & Anti-Gravity Surfaces */
-.glass-surface {
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+/* Blick-Inspired Ultra-Clean Dark Cards */
+.blick-card {
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.glass-surface-active {
-  background: rgba(6, 182, 212, 0.06);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+.blick-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.blick-card-active {
+  background: #14161B;
   border: 1px solid rgba(6, 182, 212, 0.35);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(6, 182, 212, 0.15);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px -10px rgba(6, 182, 212, 0.15);
 }
 
-.glass-surface-amber {
-  background: rgba(245, 158, 11, 0.06);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+.blick-card-amber {
+  background: #191612;
   border: 1px solid rgba(245, 158, 11, 0.35);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(245, 158, 11, 0.15);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.15);
 }
 
-/* Drifting Ambient Luminescence Keyframes */
-@keyframes float-orb-1 {
-  0%, 100% {
-    transform: translate(0px, 0px) scale(1);
-    opacity: 0.18;
-  }
-  50% {
-    transform: translate(40px, 30px) scale(1.1);
-    opacity: 0.25;
-  }
+/* Blick Minimalist Buttons */
+.blick-btn-primary {
+  background: #FFFFFF;
+  color: #000000;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
 }
 
-@keyframes float-orb-2 {
-  0%, 100% {
-    transform: translate(0px, 0px) scale(1);
-    opacity: 0.15;
-  }
-  50% {
-    transform: translate(-30px, 40px) scale(1.15);
-    opacity: 0.22;
-  }
+.blick-btn-primary:hover {
+  background: #E5E7EB;
 }
 
-@keyframes float-orb-3 {
-  0%, 100% {
-    transform: translate(0px, 0px) scale(1);
-    opacity: 0.14;
-  }
-  50% {
-    transform: translate(25px, -35px) scale(1.08);
-    opacity: 0.20;
-  }
+.blick-btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: #E5E7EB;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
 }
 
-.animate-orb-1 {
-  animation: float-orb-1 16s ease-in-out infinite;
+.blick-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
 }
 
-.animate-orb-2 {
-  animation: float-orb-2 20s ease-in-out infinite;
+.blick-btn-accent {
+  background: rgba(6, 182, 212, 0.12);
+  color: #22D3EE;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
 }
 
-.animate-orb-3 {
-  animation: float-orb-3 18s ease-in-out infinite;
+.blick-btn-accent:hover {
+  background: rgba(6, 182, 212, 0.22);
+  border-color: rgba(6, 182, 212, 0.5);
 }
 
 /* Custom Scrollbars */
@@ -94,7 +90,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(7, 9, 14, 0.8);
+  background: #080808;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -103,5 +99,5 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(6, 182, 212, 0.4);
+  background: rgba(255, 255, 255, 0.3);
 }
