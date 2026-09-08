@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldAlert, CheckCircle2, Save, Download, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { ShieldAlert, Save, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { db, getTodayDateStr, DebriefEntry } from '@/lib/db';
 import { playCompletionChime } from '@/lib/audio';
@@ -87,88 +87,88 @@ ${selectedChips.map(c => `- [x] ${c}`).join('\n')}
 
   return (
     <motion.div
-      whileHover={{ y: -3 }}
-      transition={{ type: 'spring', stiffness: 280, damping: 24 }}
-      className={`rounded-2xl p-5 transition-all duration-300 ${
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.2 }}
+      className={`p-6 transition-all duration-200 ${
         completed
-          ? 'glass-surface bg-emerald-950/10 border-emerald-500/20'
-          : 'glass-surface border-amber-500/20'
+          ? 'blick-card border-[#e38b6c]/40 bg-[#141211]'
+          : 'blick-card'
       }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl border ${completed ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'}`}>
+          <div className="p-2.5 rounded-lg bg-[#0009] border border-[#333333] text-[#e38b6c]">
             <ShieldAlert className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono tracking-widest text-amber-400 uppercase">09:30 PM • DIRECTIVE 05</span>
+              <span className="text-[10px] font-mono tracking-widest text-[#e38b6c] uppercase font-bold">09:30 PM • DIRECTIVE 05</span>
             </div>
-            <h2 className="font-semibold text-base text-white tracking-wide">Nightly Takhkir</h2>
+            <h2 className="font-bold text-base text-[#f0f0f0] tracking-wide">Nightly Takhkir</h2>
           </div>
         </div>
 
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 transition"
+          className="p-2 btn-blick-secondary text-[#a0a0a0] hover:text-white"
         >
-          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {isExpanded ? <ChevronUp className="w-4 h-4 text-[#e38b6c]" /> : <ChevronDown className="w-4 h-4 text-[#666666]" />}
         </button>
       </div>
 
-      <p className="text-xs text-gray-300 mb-4">Ego-free operational debrief vault & single non-negotiable rule adjustment.</p>
+      <p className="text-xs text-[#a0a0a0] mb-4">Ego-free operational debrief vault & single non-negotiable rule adjustment.</p>
 
       {isExpanded && (
         <div className="space-y-3.5">
           {/* Form Fields */}
           <div>
-            <label className="block text-[11px] font-mono text-cyan-400 mb-1">1. TARGET OBJECTIVE (WHAT WAS TESTED?)</label>
+            <label className="block text-[11px] font-mono text-[#e38b6c] mb-1 font-bold uppercase">1. TARGET OBJECTIVE (WHAT WAS TESTED?)</label>
             <input
               type="text"
               value={targetObjective}
               onChange={(e) => setTargetObjective(e.target.value)}
               placeholder="e.g. Acidus Novus glance speed & 5-round boxing interval focus"
-              className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-white outline-none focus:border-cyan-500/50 transition font-sans"
+              className="w-full px-3 py-2 rounded-lg bg-[#080808] border border-[#222222] text-xs text-[#f0f0f0] outline-none focus:border-[#e38b6c] transition"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-mono text-amber-400 mb-1">2. GROUND TRUTH (EGO-FREE REALITY)</label>
+            <label className="block text-[11px] font-mono text-[#e38b6c] mb-1 font-bold uppercase">2. GROUND TRUTH (EGO-FREE REALITY)</label>
             <textarea
               rows={2}
               value={groundTruth}
               onChange={(e) => setGroundTruth(e.target.value)}
               placeholder="e.g. Retained 3 out of 4 visual details; round 4 boxing rest extended by 15s."
-              className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-white outline-none focus:border-amber-500/50 transition font-sans resize-none"
+              className="w-full px-3 py-2 rounded-lg bg-[#080808] border border-[#222222] text-xs text-[#f0f0f0] outline-none focus:border-[#e38b6c] transition resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-mono text-rose-400 mb-1">3. POINT OF FRICTION (WHERE DID LAG OCCUR?)</label>
+            <label className="block text-[11px] font-mono text-[#e38b6c] mb-1 font-bold uppercase">3. POINT OF FRICTION (WHERE DID LAG OCCUR?)</label>
             <input
               type="text"
               value={frictionPoint}
               onChange={(e) => setFrictionPoint(e.target.value)}
               placeholder="e.g. Hesitation during high-tempo speech desynchronization drill."
-              className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-white outline-none focus:border-rose-500/50 transition font-sans"
+              className="w-full px-3 py-2 rounded-lg bg-[#080808] border border-[#222222] text-xs text-[#f0f0f0] outline-none focus:border-[#e38b6c] transition"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-mono text-emerald-400 mb-1">4. SINGLE RULE ADJUSTMENT (NON-NEGOTIABLE FOR TOMORROW)</label>
+            <label className="block text-[11px] font-mono text-[#e38b6c] mb-1 font-bold uppercase">4. SINGLE RULE ADJUSTMENT (NON-NEGOTIABLE FOR TOMORROW)</label>
             <input
               type="text"
               value={singleRuleAdjustment}
               onChange={(e) => setSingleRuleAdjustment(e.target.value)}
               placeholder="e.g. Initiate 3-second shoulder check immediately upon entering sports pitch."
-              className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-white outline-none focus:border-emerald-500/50 transition font-sans"
+              className="w-full px-3 py-2 rounded-lg bg-[#080808] border border-[#222222] text-xs text-[#f0f0f0] outline-none focus:border-[#e38b6c] transition"
             />
           </div>
 
           {/* Track Completion Chips */}
           <div>
-            <label className="block text-[10px] font-mono text-gray-400 mb-1.5 uppercase">VERIFIED TRACK COMPLETION</label>
+            <label className="block text-[10px] font-mono text-[#666666] mb-1.5 uppercase font-bold">VERIFIED TRACK COMPLETION</label>
             <div className="flex flex-wrap gap-1.5">
               {AVAILABLE_CHIPS.map((chip) => {
                 const isSelected = selectedChips.includes(chip);
@@ -176,10 +176,10 @@ ${selectedChips.map(c => `- [x] ${c}`).join('\n')}
                   <button
                     key={chip}
                     onClick={() => toggleChip(chip)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono border transition ${
+                    className={`px-2.5 py-1 rounded text-xs font-mono border transition ${
                       isSelected
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                        : 'bg-white/[0.02] text-gray-400 border-white/10 hover:text-gray-200'
+                        ? 'btn-blick-primary'
+                        : 'btn-blick-secondary text-[#666666]'
                     }`}
                   >
                     [{isSelected ? '✓' : ' '}] {chip}
@@ -193,18 +193,18 @@ ${selectedChips.map(c => `- [x] ${c}`).join('\n')}
           <div className="flex items-center gap-2 pt-2">
             <button
               onClick={handleArchiveDebrief}
-              className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-medium text-xs transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded btn-blick-primary font-bold text-xs transition flex items-center justify-center gap-2"
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-4 h-4 text-white" />
               <span>{isSaved ? 'ARCHIVED TO VAULT!' : 'ARCHIVE DEBRIEF'}</span>
             </button>
 
             <button
               onClick={exportCurrentAsMarkdown}
-              className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-gray-300 hover:text-white transition"
+              className="p-2.5 rounded btn-blick-secondary text-[#a0a0a0] hover:text-white"
               title="Export as Markdown .md"
             >
-              <Download className="w-4 h-4 text-cyan-400" />
+              <Download className="w-4 h-4 text-[#e38b6c]" />
             </button>
           </div>
         </div>

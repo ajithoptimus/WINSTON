@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, Flame, Play, Pause, RotateCcw, CheckCircle2, Shield, Plus, Trash2 } from 'lucide-react';
+import { Dumbbell, Flame, Play, Pause, RotateCcw, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { db, getTodayDateStr, GymLogEntry } from '@/lib/db';
 import { playBoxingChime, playCompletionChime } from '@/lib/audio';
@@ -22,8 +22,8 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
   const [mode, setMode] = useState<'boxing' | 'gym'>('boxing');
 
   // Boxing Interval Timer State
-  const WORK_SECONDS = 3 * 60; // 3 min
-  const REST_SECONDS = 1 * 60; // 1 min
+  const WORK_SECONDS = 3 * 60;
+  const REST_SECONDS = 1 * 60;
   const TOTAL_ROUNDS = 5;
 
   const [round, setRound] = useState<number>(1);
@@ -37,7 +37,6 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
   const [gymRows, setGymRows] = useState<GymLogEntry[]>([]);
 
   useEffect(() => {
-    // Load today's gym logs from Dexie
     const today = getTodayDateStr();
     db.gymLogs.where({ dateStr: today }).toArray().then((logs) => {
       if (logs.length > 0) {
@@ -49,19 +48,17 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
     }).catch(console.error);
   }, []);
 
-  // Boxing Interval Timer Logic
+  // Boxing Timer Loop
   useEffect(() => {
     if (isBoxingRunning) {
       boxingTimerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             if (!isRest) {
-              // Transition to REST
               playBoxingChime(true);
               setIsRest(true);
               return REST_SECONDS;
             } else {
-              // Transition to WORK or END
               if (round >= TOTAL_ROUNDS) {
                 clearInterval(boxingTimerRef.current!);
                 setIsBoxingRunning(false);
@@ -100,7 +97,6 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
     updated[index] = { ...updated[index], [field]: value };
     setGymRows(updated);
 
-    // Save to Dexie
     const entry = updated[index];
     if (entry.id) {
       db.gymLogs.update(entry.id, entry).catch(console.error);
@@ -125,63 +121,55 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
 
   return (
     <motion.div
-      whileHover={{ y: -3 }}
-      transition={{ type: 'spring', stiffness: 280, damping: 24 }}
-      className={`rounded-2xl p-5 transition-all duration-300 ${
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.2 }}
+      className={`p-6 transition-all duration-200 ${
         completed
-          ? 'glass-surface bg-emerald-950/10 border-emerald-500/20'
-          : isRest && isBoxingRunning
-          ? 'glass-surface-amber'
-          : 'glass-surface-active'
+          ? 'blick-card border-[#e38b6c]/40 bg-[#141211]'
+          : 'blick-card'
       }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl border ${
-            completed 
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-              : isRest && isBoxingRunning
-              ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-              : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-          }`}>
+          <div className="p-2.5 rounded-lg bg-[#0009] border border-[#333333] text-[#e38b6c]">
             {mode === 'boxing' ? <Flame className="w-5 h-5" /> : <Dumbbell className="w-5 h-5" />}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase">05:30 PM • DIRECTIVE 03</span>
+              <span className="text-[10px] font-mono tracking-widest text-[#e38b6c] uppercase font-bold">05:30 PM • DIRECTIVE 03</span>
             </div>
-            <h2 className="font-semibold text-base text-white tracking-wide">Physical Armor</h2>
+            <h2 className="font-bold text-base text-[#f0f0f0] tracking-wide">Physical Armor</h2>
           </div>
         </div>
 
         <button
           onClick={handleCompleteSession}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono transition-all ${
+          className={`px-3 py-1.5 rounded text-xs font-mono transition flex items-center gap-1.5 ${
             completed
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-              : 'bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+              ? 'btn-blick-primary shadow-lg'
+              : 'btn-blick-secondary'
           }`}
         >
-          <CheckCircle2 className={`w-4 h-4 ${completed ? 'text-emerald-400 fill-emerald-400/20' : 'text-cyan-400'}`} />
+          <CheckCircle2 className="w-4 h-4" />
           <span>{completed ? 'COMPLETED' : 'COMPLETE'}</span>
         </button>
       </div>
 
       {/* Mode Switcher Tabs */}
-      <div className="p-1 rounded-xl bg-black/40 border border-white/5 flex items-center mb-4">
+      <div className="p-1 rounded-lg bg-[#080808] border border-[#222222] flex items-center mb-4">
         <button
           onClick={() => setMode('boxing')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono transition flex items-center justify-center gap-1.5 ${
-            mode === 'boxing' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow' : 'text-gray-400 hover:text-gray-200'
+          className={`flex-1 py-1.5 rounded text-xs font-mono transition flex items-center justify-center gap-1.5 ${
+            mode === 'boxing' ? 'btn-blick-primary' : 'text-[#a0a0a0] hover:text-white'
           }`}
         >
           <Flame className="w-3.5 h-3.5" /> Boxing Interval (3m/1m)
         </button>
         <button
           onClick={() => setMode('gym')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-mono transition flex items-center justify-center gap-1.5 ${
-            mode === 'gym' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow' : 'text-gray-400 hover:text-gray-200'
+          className={`flex-1 py-1.5 rounded text-xs font-mono transition flex items-center justify-center gap-1.5 ${
+            mode === 'gym' ? 'btn-blick-primary' : 'text-[#a0a0a0] hover:text-white'
           }`}
         >
           <Dumbbell className="w-3.5 h-3.5" /> Founder Gym Log
@@ -190,39 +178,29 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
 
       {/* MODE A: Boxing Interval Timer */}
       {mode === 'boxing' && (
-        <div className={`p-4 rounded-xl border transition-all duration-300 ${
-          isRest && isBoxingRunning
-            ? 'bg-amber-500/10 border-amber-500/30'
-            : 'bg-black/40 border-white/5'
-        }`}>
+        <div className="p-4 rounded-lg bg-[#080808] border border-[#222222]">
           <div className="flex items-center justify-between mb-3">
-            <span className={`text-xs font-mono font-bold tracking-widest uppercase ${
-              isRest && isBoxingRunning ? 'text-amber-400' : 'text-cyan-400'
-            }`}>
+            <span className="text-xs font-mono font-bold tracking-widest uppercase text-[#e38b6c]">
               {isRest && isBoxingRunning ? 'REST ROUND' : `WORK ROUND ${round} / ${TOTAL_ROUNDS}`}
             </span>
-            <span className="text-[10px] font-mono text-gray-400">3 MIN WORK / 1 MIN REST</span>
+            <span className="text-[10px] font-mono text-[#666666]">3 MIN WORK / 1 MIN REST</span>
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="text-4xl font-extrabold font-mono tracking-tight text-white">
+            <div className="text-4xl font-extrabold font-mono tracking-tight blick-gradient-text">
               {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsBoxingRunning(!isBoxingRunning)}
-                className={`p-3 rounded-xl border transition ${
-                  isRest && isBoxingRunning
-                    ? 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/40 text-amber-300'
-                    : 'bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-500/40 text-cyan-300'
-                }`}
+                className="p-3 rounded btn-blick-primary"
               >
-                {isBoxingRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                {isBoxingRunning ? <Pause className="w-5 h-5 text-white" /> : <Play className="w-5 h-5 text-white" />}
               </button>
               <button
                 onClick={resetBoxing}
-                className="p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-gray-400 hover:text-white transition"
+                className="p-3 rounded btn-blick-secondary text-[#a0a0a0] hover:text-white"
               >
                 <RotateCcw className="w-5 h-5" />
               </button>
@@ -231,47 +209,47 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
         </div>
       )}
 
-      {/* MODE B: Founder Minimalist Gym Log */}
+      {/* MODE B: Gym Log */}
       {mode === 'gym' && (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {gymRows.map((row, idx) => (
-            <div key={idx} className="p-3 rounded-xl bg-black/40 border border-white/5 flex flex-wrap items-center justify-between gap-2">
+            <div key={idx} className="p-3 rounded-lg bg-[#080808] border border-[#222222] flex flex-wrap items-center justify-between gap-2">
               <input
                 type="text"
                 value={row.exercise}
                 onChange={(e) => handleGymInputChange(idx, 'exercise', e.target.value)}
-                className="bg-transparent border-none outline-none font-medium text-xs text-white flex-1 min-w-[120px]"
+                className="bg-transparent border-none outline-none font-semibold text-xs text-[#f0f0f0] flex-1 min-w-[120px]"
                 placeholder="Exercise Name"
               />
 
               <div className="flex items-center gap-2 font-mono text-xs">
-                <div className="flex items-center gap-1 bg-white/[0.04] px-2 py-1 rounded-lg border border-white/10">
-                  <span className="text-[10px] text-gray-500">SETS</span>
+                <div className="flex items-center gap-1 bg-[#0009] px-2 py-1 rounded border border-[#333333]">
+                  <span className="text-[10px] text-[#666666]">SETS</span>
                   <input
                     type="number"
                     value={row.sets}
                     onChange={(e) => handleGymInputChange(idx, 'sets', parseInt(e.target.value) || 0)}
-                    className="w-8 bg-transparent text-center text-cyan-300 outline-none"
+                    className="w-8 bg-transparent text-center text-[#e38b6c] outline-none font-bold"
                   />
                 </div>
 
-                <div className="flex items-center gap-1 bg-white/[0.04] px-2 py-1 rounded-lg border border-white/10">
-                  <span className="text-[10px] text-gray-500">REPS</span>
+                <div className="flex items-center gap-1 bg-[#0009] px-2 py-1 rounded border border-[#333333]">
+                  <span className="text-[10px] text-[#666666]">REPS</span>
                   <input
                     type="number"
                     value={row.reps}
                     onChange={(e) => handleGymInputChange(idx, 'reps', parseInt(e.target.value) || 0)}
-                    className="w-8 bg-transparent text-center text-cyan-300 outline-none"
+                    className="w-8 bg-transparent text-center text-[#e38b6c] outline-none font-bold"
                   />
                 </div>
 
-                <div className="flex items-center gap-1 bg-white/[0.04] px-2 py-1 rounded-lg border border-white/10">
-                  <span className="text-[10px] text-gray-500">KG</span>
+                <div className="flex items-center gap-1 bg-[#0009] px-2 py-1 rounded border border-[#333333]">
+                  <span className="text-[10px] text-[#666666]">KG</span>
                   <input
                     type="number"
                     value={row.weight}
                     onChange={(e) => handleGymInputChange(idx, 'weight', parseFloat(e.target.value) || 0)}
-                    className="w-12 bg-transparent text-center text-cyan-300 outline-none"
+                    className="w-12 bg-transparent text-center text-[#e38b6c] outline-none font-bold"
                   />
                 </div>
               </div>

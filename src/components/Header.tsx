@@ -28,48 +28,52 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full px-4 py-3 bg.080808]/90 backdrop-blur-xl border-b border-white/10">
+      <header className="sticky top-0 z-40 w-full px-6 py-4 bg-[#080808]/80 backdrop-blur-2xl border-b border-white/[0.06]">
         <div className="max-w-xl mx-auto flex items-center justify-between">
           
-          {/* Blick-Inspired Logo Badge */}
+          {/* Logo & Telemetry */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-white text-black font-extrabold flex items-center justify-center text-sm shadow-md">
-              D
+            <div className="w-8 h-8 rounded-lg blick-gradient-bg p-[1px] shadow-lg shadow-[#e38b6c]/20">
+              <div className="w-full h-full bg-[#080808] rounded-[7px] flex items-center justify-center font-extrabold text-[#f0f0f0] text-sm">
+                D
+              </div>
             </div>
 
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-sm tracking-wider text-white">DIRECTIVE OS</h1>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/10 text-gray-300 border border-white/15">
-                  v1.0 BETA
+                <h1 className="font-extrabold text-sm tracking-wider text-[#f0f0f0] blick-gradient-text">
+                  DIRECTIVE OS
+                </h1>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/[0.05] text-[#e38b6c] border border-[#e38b6c]/30">
+                  {completedCount}/5 COMPLETED
                 </span>
               </div>
-              <p className="text-[11px] font-mono text-gray-400 flex items-center gap-1.5">
+              <p className="text-[11px] font-mono text-[#a0a0a0] flex items-center gap-1.5">
                 <span>{currentDate}</span>
-                <span className="text-gray-600">•</span>
-                <span className="text-cyan-400 font-bold">{currentTime}</span>
+                <span className="text-[#444444]">•</span>
+                <span className="text-[#e38b6c] font-bold">{currentTime}</span>
               </p>
             </div>
           </div>
 
-          {/* Action Tools */}
+          {/* Actions */}
           <div className="flex items-center gap-2">
             <button
               onClick={onOpenHistory}
-              className="px-3 py-1.5 rounded-xl blick-btn-secondary flex items-center gap-1.5 text-xs font-mono"
+              className="px-3 py-1.5 btn-blick-secondary flex items-center gap-1.5 text-xs font-mono"
               title="Debrief Vault Archive"
             >
-              <History className="w-3.5 h-3.5 text-amber-400" />
+              <History className="w-3.5 h-3.5 text-[#e38b6c]" />
               <span>Vault</span>
             </button>
 
             <button
               onClick={() => setIsAlarmOpen(true)}
-              className="p-2 rounded-xl blick-btn-secondary text-gray-300 hover:text-cyan-400 transition relative"
-              title="Alarm & Telemetry Settings"
+              className="p-2 btn-blick-secondary text-[#a0a0a0] hover:text-white transition relative"
+              title="Alarm Telemetry Settings"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-cyan-400" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#e38b6c]" />
             </button>
           </div>
 

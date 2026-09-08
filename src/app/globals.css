@@ -1,89 +1,93 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: #080808;
-    --foreground: #F3F4F6;
-  }
+:root {
+  --bg-base: #080808;
+  --bg-surface: #111111;
 
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', 'Plus Jakarta Sans', sans-serif;
-    overflow-x: hidden;
-    min-height: 100vh;
-    -webkit-tap-highlight-color: transparent;
-  }
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-medium: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.15);
+
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #666666;
+  --text-muted: #444444;
+  
+  --accent-warm: #e38b6c;
+  --accent-pink: #d23aad;
+  --gradient-accent: linear-gradient(135deg, var(--accent-warm), var(--accent-pink));
 }
 
-/* Blick-Inspired Ultra-Clean Dark Cards */
+body {
+  background-color: var(--bg-base);
+  color: var(--text-secondary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Blick Card Component */
 .blick-card {
-  background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
-  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .blick-card:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--border-medium);
 }
 
 .blick-card-active {
-  background: #14161B;
-  border: 1px solid rgba(6, 182, 212, 0.35);
-  border-radius: 1rem;
-  box-shadow: 0 10px 30px -10px rgba(6, 182, 212, 0.15);
+  background: var(--bg-surface);
+  border: 1px solid var(--accent-warm);
+  border-radius: 16px;
+  box-shadow: 0 0 25px -5px rgba(227, 139, 108, 0.25);
 }
 
-.blick-card-amber {
-  background: #191612;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  border-radius: 1rem;
-  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.15);
+/* Blick Accent Text & Gradients */
+.blick-gradient-text {
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Blick Minimalist Buttons */
-.blick-btn-primary {
-  background: #FFFFFF;
-  color: #000000;
+.blick-gradient-bg {
+  background: var(--gradient-accent);
+}
+
+/* Blick Buttons */
+.btn-blick-primary {
+  background: linear-gradient(45deg, #e38b6c, #d23aad);
+  color: #ffffff;
   font-weight: 600;
-  border-radius: 0.75rem;
-  transition: all 0.15s ease;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px #fff0 inset;
+  transition: all 0.2s ease;
 }
 
-.blick-btn-primary:hover {
-  background: #E5E7EB;
+.btn-blick-primary:hover {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+  opacity: 0.95;
 }
 
-.blick-btn-secondary {
-  background: rgba(255, 255, 255, 0.04);
-  color: #E5E7EB;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.75rem;
-  transition: all 0.15s ease;
+.btn-blick-secondary {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #333333;
+  color: var(--text-primary);
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
-.blick-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.22);
-  color: #FFFFFF;
+.btn-blick-secondary:hover {
+  border-color: var(--accent-warm);
+  color: #ffffff;
 }
 
-.blick-btn-accent {
-  background: rgba(6, 182, 212, 0.12);
-  color: #22D3EE;
-  border: 1px solid rgba(6, 182, 212, 0.3);
-  border-radius: 0.75rem;
-  transition: all 0.15s ease;
-}
-
-.blick-btn-accent:hover {
-  background: rgba(6, 182, 212, 0.22);
-  border-color: rgba(6, 182, 212, 0.5);
-}
-
-/* Custom Scrollbars */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -99,5 +103,5 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--accent-warm);
 }

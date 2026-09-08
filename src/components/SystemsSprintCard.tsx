@@ -69,60 +69,60 @@ export default function SystemsSprintCard({ systems, completed, onToggleComplete
 
   return (
     <motion.div
-      whileHover={{ y: -3 }}
-      transition={{ type: 'spring', stiffness: 280, damping: 24 }}
-      className={`rounded-2xl p-5 transition-all duration-300 ${
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.2 }}
+      className={`p-6 transition-all duration-200 ${
         completed
-          ? 'glass-surface bg-emerald-950/10 border-emerald-500/20'
-          : 'glass-surface border-cyan-500/20'
+          ? 'blick-card border-[#e38b6c]/40 bg-[#141211]'
+          : 'blick-card'
       }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl border ${completed ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'}`}>
+          <div className="p-2.5 rounded-lg bg-[#0009] border border-[#333333] text-[#e38b6c]">
             <Terminal className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase">EVENING • DIRECTIVE 04</span>
+              <span className="text-[10px] font-mono tracking-widest text-[#e38b6c] uppercase font-bold">EVENING • DIRECTIVE 04</span>
             </div>
-            <h2 className="font-semibold text-base text-white tracking-wide">{systems.title}</h2>
+            <h2 className="font-bold text-base text-[#f0f0f0] tracking-wide">{systems.title}</h2>
           </div>
         </div>
 
         <button
           onClick={handleCompleteClick}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono transition-all ${
+          className={`px-3 py-1.5 rounded text-xs font-mono transition flex items-center gap-1.5 ${
             completed
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-              : 'bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+              ? 'btn-blick-primary shadow-lg'
+              : 'btn-blick-secondary'
           }`}
         >
-          <CheckCircle2 className={`w-4 h-4 ${completed ? 'text-emerald-400 fill-emerald-400/20' : 'text-cyan-400'}`} />
+          <CheckCircle2 className="w-4 h-4" />
           <span>{completed ? 'COMPLETED' : 'COMPLETE'}</span>
         </button>
       </div>
 
       {/* Stopwatch Timer Display */}
-      <div className="p-3.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between gap-3 mb-4">
+      <div className="p-3.5 rounded-lg bg-[#080808] border border-[#222222] flex items-center justify-between gap-3 mb-4">
         <div>
-          <div className="text-2xl font-bold font-mono tracking-tight text-cyan-300">
+          <div className="text-2xl font-extrabold font-mono tracking-tight blick-gradient-text">
             {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
           </div>
-          <p className="text-[10px] font-mono text-gray-400">15-MIN LOW-LEVEL SPRINT</p>
+          <p className="text-[10px] font-mono text-[#666666]">15-MIN SPRINT</p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsRunning(!isRunning)}
-            className="p-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 transition"
+            className="p-2.5 rounded btn-blick-primary"
           >
-            {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {isRunning ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white" />}
           </button>
           <button
             onClick={handleReset}
-            className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-gray-400 hover:text-white transition"
+            className="p-2.5 rounded btn-blick-secondary text-[#a0a0a0] hover:text-white"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -135,14 +135,14 @@ export default function SystemsSprintCard({ systems, completed, onToggleComplete
           <div
             key={idx}
             onClick={() => toggleTask(idx)}
-            className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 flex items-start gap-2.5 cursor-pointer transition"
+            className="p-2.5 rounded-lg bg-[#080808] border border-[#222222] hover:border-[#333333] flex items-start gap-2.5 cursor-pointer transition"
           >
             {checkedTasks[idx] ? (
-              <CheckSquare className="w-4 h-4 text-cyan-400 mt-0.5 shrink-0" />
+              <CheckSquare className="w-4 h-4 text-[#e38b6c] mt-0.5 shrink-0" />
             ) : (
-              <Square className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+              <Square className="w-4 h-4 text-[#666666] mt-0.5 shrink-0" />
             )}
-            <span className={`text-xs ${checkedTasks[idx] ? 'text-gray-400 line-through' : 'text-gray-200'}`}>
+            <span className={`text-xs ${checkedTasks[idx] ? 'text-[#666666] line-through' : 'text-[#f0f0f0]'}`}>
               {task}
             </span>
           </div>
