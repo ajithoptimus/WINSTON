@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, History, Activity, Flame } from 'lucide-react';
+import { Bell, History, Activity, Volume2 } from 'lucide-react';
 import AlarmModal from './AlarmModal';
 import DisciplineRadarModal from './DisciplineRadarModal';
+import { getTodayDateStr } from '@/lib/db';
+import { getDeterministicDirectives } from '@/lib/directives';
+import { speakWinstonBriefing } from '@/lib/winston';
 
 interface HeaderProps {
   onOpenHistory: () => void;
@@ -15,6 +18,7 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
   const [currentDate, setCurrentDate] = useState<string>('');
   const [isAlarmOpen, setIsAlarmOpen] = useState(false);
   const [isRadarOpen, setIsRadarOpen] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -27,6 +31,14 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleWinstonBriefing = () => {
+    const today = getTodayDateStr();
+    const { drill, recon } = getDeterministicDirectives(today);
+    setIsSpeaking(true);
+    speakWinstonBriefing(currentDate, drill.title, recon.title);
+    setTimeout(() => setIsSpeaking(false), 4000);
+  };
 
   return (
     <>
@@ -60,6 +72,17 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleWinstonBriefing}
+              className={`px-2.5 py-1.5 btn-blick-secondary flex items-center gap-1.5 text-xs font-mono transition ${
+                isSpeaking ? 'border-[#e38b6c] text-[#e38b6c] animate-pulse' : ''
+              }`}
+              title="Winston Voice Briefing"
+            >
+              <Volume2 className="w-3.5 h-3.5 text-[#e38b6c]" />
+              <span className="hidden sm:inline">Winston</span>
+            </button>
+
             <button
               onClick={() => setIsRadarOpen(true)}
               className="px-2.5 py-1.5 btn-blick-secondary flex items-center gap-1.5 text-xs font-mono"

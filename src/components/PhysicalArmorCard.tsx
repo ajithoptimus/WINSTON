@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, Flame, Play, Pause, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { Dumbbell, Flame, Play, Pause, RotateCcw, CheckCircle2, Volume2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { db, getTodayDateStr, GymLogEntry } from '@/lib/db';
 import { playBoxingChime, playCompletionChime } from '@/lib/audio';
+import { speakWinstonTimerAlert } from '@/lib/winston';
 
 interface PhysicalArmorCardProps {
   completed: boolean;
@@ -48,26 +49,32 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
     }).catch(console.error);
   }, []);
 
-  // Boxing Timer Loop
+  // Boxing Timer Loop with Winston Tactical Audio Announcer
   useEffect(() => {
     if (isBoxingRunning) {
       boxingTimerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             if (!isRest) {
+              // Transition to REST
               playBoxingChime(true);
+              speakWinstonTimerAlert('rest_start');
               setIsRest(true);
               return REST_SECONDS;
             } else {
+              // Transition to WORK or END
               if (round >= TOTAL_ROUNDS) {
                 clearInterval(boxingTimerRef.current!);
                 setIsBoxingRunning(false);
                 playCompletionChime();
+                speakWinstonTimerAlert('drill_complete');
                 confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
                 return 0;
               } else {
                 playBoxingChime(false);
-                setRound((r) => r + 1);
+                const nextRound = round + 1;
+                setRound(nextRound);
+                speakWinstonTimerAlert('work_start', nextRound);
                 setIsRest(false);
                 return WORK_SECONDS;
               }
@@ -84,6 +91,13 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
       if (boxingTimerRef.current) clearInterval(boxingTimerRef.current);
     };
   }, [isBoxingRunning, isRest, round]);
+
+  const handleStartBoxing = () => {
+    if (!isBoxingRunning && timeLeft === WORK_SECONDS) {
+      speakWinstonTimerAlert('work_start', round);
+    }
+    setIsBoxingRunning(!isBoxingRunning);
+  };
 
   const resetBoxing = () => {
     setIsBoxingRunning(false);
@@ -111,6 +125,7 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
   const handleCompleteSession = () => {
     if (!completed) {
       playCompletionChime();
+      speakWinstonTimerAlert('drill_complete');
       confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
     }
     onToggleComplete();
@@ -138,6 +153,9 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono tracking-widest text-[#e38b6c] uppercase font-bold">05:30 PM • DIRECTIVE 03</span>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/[0.05] text-[#e38b6c] border border-[#e38b6c]/30 flex items-center gap-1">
+                <Volume2 className="w-2.5 h-2.5" /> WINSTON ANNOUNCER
+              </span>
             </div>
             <h2 className="font-bold text-base text-[#f0f0f0] tracking-wide">Physical Armor</h2>
           </div>
@@ -193,7 +211,7 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setIsBoxingRunning(!isBoxingRunning)}
+                onClick={handleStartBoxing}
                 className="p-3 rounded btn-blick-primary"
               >
                 {isBoxingRunning ? <Pause className="w-5 h-5 text-white" /> : <Play className="w-5 h-5 text-white" />}
