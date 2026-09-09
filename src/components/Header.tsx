@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, History, Radio } from 'lucide-react';
+import { Bell, History, Activity, Flame } from 'lucide-react';
 import AlarmModal from './AlarmModal';
+import DisciplineRadarModal from './DisciplineRadarModal';
 
 interface HeaderProps {
   onOpenHistory: () => void;
@@ -13,6 +14,7 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
   const [isAlarmOpen, setIsAlarmOpen] = useState(false);
+  const [isRadarOpen, setIsRadarOpen] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -59,8 +61,17 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
           {/* Actions */}
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setIsRadarOpen(true)}
+              className="px-2.5 py-1.5 btn-blick-secondary flex items-center gap-1.5 text-xs font-mono"
+              title="Discipline Radar & Streak Analytics"
+            >
+              <Activity className="w-3.5 h-3.5 text-[#e38b6c]" />
+              <span className="hidden sm:inline">Radar</span>
+            </button>
+
+            <button
               onClick={onOpenHistory}
-              className="px-3 py-1.5 btn-blick-secondary flex items-center gap-1.5 text-xs font-mono"
+              className="px-2.5 py-1.5 btn-blick-secondary flex items-center gap-1.5 text-xs font-mono"
               title="Debrief Vault Archive"
             >
               <History className="w-3.5 h-3.5 text-[#e38b6c]" />
@@ -81,6 +92,7 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
       </header>
 
       <AlarmModal isOpen={isAlarmOpen} onClose={() => setIsAlarmOpen(false)} />
+      <DisciplineRadarModal isOpen={isRadarOpen} onClose={() => setIsRadarOpen(false)} />
     </>
   );
 }
