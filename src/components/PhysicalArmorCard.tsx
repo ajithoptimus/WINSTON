@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, Flame, Play, Pause, RotateCcw, CheckCircle2, Volume2 } from 'lucide-react';
+import { Dumbbell, Flame, Play, Pause, RotateCcw, CheckCircle2, Volume2, Heart } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { db, getTodayDateStr, GymLogEntry } from '@/lib/db';
 import { playBoxingChime, playCompletionChime } from '@/lib/audio';
 import { speakWinstonTimerAlert } from '@/lib/winston';
+import HardwareTelemetryWidget from './HardwareTelemetryWidget';
 
 interface PhysicalArmorCardProps {
   completed: boolean;
@@ -21,6 +22,7 @@ const DEFAULT_EXERCISES = [
 
 export default function PhysicalArmorCard({ completed, onToggleComplete }: PhysicalArmorCardProps) {
   const [mode, setMode] = useState<'boxing' | 'gym'>('boxing');
+  const [liveBpm, setLiveBpm] = useState<number | null>(null);
 
   // Boxing Interval Timer State
   const WORK_SECONDS = 3 * 60;
@@ -56,13 +58,11 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
         setTimeLeft((prev) => {
           if (prev <= 1) {
             if (!isRest) {
-              // Transition to REST
               playBoxingChime(true);
               speakWinstonTimerAlert('rest_start');
               setIsRest(true);
               return REST_SECONDS;
             } else {
-              // Transition to WORK or END
               if (round >= TOTAL_ROUNDS) {
                 clearInterval(boxingTimerRef.current!);
                 setIsBoxingRunning(false);
@@ -152,10 +152,12 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono tracking-widest text-[#e38b6c] uppercase font-bold">05:30 PM • DIRECTIVE 03</span>
-              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/[0.05] text-[#e38b6c] border border-[#e38b6c]/30 flex items-center gap-1">
-                <Volume2 className="w-2.5 h-2.5" /> WINSTON ANNOUNCER
-              </span>
+              <span className="text-[10px] font-mono tracking-widest text-[#e38b6c] uppercase font-bold">05:30 PM • DIRECTIVE 04</span>
+              {liveBpm && (
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1">
+                  <Heart className="w-2.5 h-2.5 fill-rose-400 animate-ping" /> {liveBpm} BPM
+                </span>
+              )}
             </div>
             <h2 className="font-bold text-base text-[#f0f0f0] tracking-wide">Physical Armor</h2>
           </div>
@@ -172,6 +174,11 @@ export default function PhysicalArmorCard({ completed, onToggleComplete }: Physi
           <CheckCircle2 className="w-4 h-4" />
           <span>{completed ? 'COMPLETED' : 'COMPLETE'}</span>
         </button>
+      </div>
+
+      {/* Smartwatch / BLE Telemetry Hardware Widget */}
+      <div className="mb-4">
+        <HardwareTelemetryWidget onBpmUpdate={(bpm) => setLiveBpm(bpm)} />
       </div>
 
       {/* Mode Switcher Tabs */}
