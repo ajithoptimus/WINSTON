@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/Header';
+import OrbitalCountdownHUD from '@/components/OrbitalCountdownHUD';
 import MorningCrucibleCard from '@/components/MorningCrucibleCard';
+import CoreMissionCard from '@/components/CoreMissionCard';
 import ReconVectorCard from '@/components/ReconVectorCard';
 import PhysicalArmorCard from '@/components/PhysicalArmorCard';
-import SystemsSprintCard from '@/components/SystemsSprintCard';
 import NightlyTakhkirCard from '@/components/NightlyTakhkirCard';
 import DebriefHistoryModal from '@/components/DebriefHistoryModal';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
@@ -16,9 +17,9 @@ export default function Home() {
   const [todayStr, setTodayStr] = useState<string>('');
   const [completedMap, setCompletedMap] = useState<Record<string, boolean>>({
     crucible: false,
+    mission: false,
     recon: false,
     physical: false,
-    systems: false,
     takhkir: false,
   });
 
@@ -33,9 +34,9 @@ export default function Home() {
     const records = await db.directives.where({ dateStr: today }).toArray();
     const map: Record<string, boolean> = {
       crucible: false,
+      mission: false,
       recon: false,
       physical: false,
-      systems: false,
       takhkir: false,
     };
 
@@ -50,7 +51,7 @@ export default function Home() {
     loadTodayState();
   }, [loadTodayState]);
 
-  const toggleDirective = async (directiveId: 'crucible' | 'recon' | 'physical' | 'systems' | 'takhkir') => {
+  const toggleDirective = async (directiveId: 'crucible' | 'mission' | 'recon' | 'physical' | 'takhkir') => {
     const today = getTodayDateStr();
     const newStatus = !completedMap[directiveId];
 
@@ -73,12 +74,15 @@ export default function Home() {
     }
   };
 
-  const { drill, recon, systems } = getDeterministicDirectives(todayStr || '2026-09-08');
+  const { drill, recon } = getDeterministicDirectives(todayStr || '2026-09-09');
   const completedCount = Object.values(completedMap).filter(Boolean).length;
 
   return (
-    <div className="relative min-h-screen bg-[#080808] text-white selection:bg-cyan-500/30 selection:text-cyan-200 font-sans">
+    <div className="relative min-h-screen bg-[#040711] text-white selection:bg-cyan-500/30 selection:text-cyan-200 font-sans">
       <ServiceWorkerRegister />
+
+      {/* Top Orbital Countdown HUD */}
+      <OrbitalCountdownHUD />
 
       {/* Main Content Viewport */}
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -87,57 +91,56 @@ export default function Home() {
           completedCount={completedCount}
         />
 
-        <main className="flex-1 w-full max-w-xl mx-auto px-4 pt-6 pb-20 space-y-4">
+        <main className="flex-1 w-full max-w-xl mx-auto px-4 pt-4 pb-20 space-y-4">
           
-          {/* Blick-Style Release Telemetry Banner */}
-          <div className="p-3.5 rounded-2xl blick-card flex items-center justify-between gap-3 text-xs border border-white/10">
+          {/* Telemetry Status Banner */}
+          <div className="p-3.5 rounded-xl blick-card flex items-center justify-between gap-3 text-xs border border-white/10">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="font-mono text-gray-300">DAILY PROTOCOL • DETERMINISTIC BUILD</span>
+              <span className="font-mono text-gray-300">OPERATOR OS // KONGAD PROTOCOL</span>
             </div>
             <span className="font-mono text-cyan-400 font-bold px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
-              {completedCount} / 5 COMPLETED
+              {completedCount} / 5 DIRECTIVES COMPLETE
             </span>
           </div>
 
-          {/* Card 1: Morning Crucible */}
+          {/* Card 1 [08:00 AM]: Morning Crucible */}
           <MorningCrucibleCard
             drill={drill}
             completed={completedMap.crucible}
             onToggleComplete={() => toggleDirective('crucible')}
           />
 
-          {/* Card 2: Daily Recon Vector */}
+          {/* Card 2 [10:00 AM]: Core Mission Directive (Kongad Dynamic Phase Tasks) */}
+          <CoreMissionCard
+            completed={completedMap.mission}
+            onToggleComplete={() => toggleDirective('mission')}
+          />
+
+          {/* Card 3 [12:30 PM]: Daily Recon Vector */}
           <ReconVectorCard
             cue={recon}
             completed={completedMap.recon}
             onToggleComplete={() => toggleDirective('recon')}
           />
 
-          {/* Card 3: Physical Armor */}
+          {/* Card 4 [05:30 PM]: Physical Armor (Boxing / Gym) */}
           <PhysicalArmorCard
             completed={completedMap.physical}
             onToggleComplete={() => toggleDirective('physical')}
           />
 
-          {/* Card 4: Systems Sprint */}
-          <SystemsSprintCard
-            systems={systems}
-            completed={completedMap.systems}
-            onToggleComplete={() => toggleDirective('systems')}
-          />
-
-          {/* Card 5: Nightly Takhkir */}
+          {/* Card 5 [09:30 PM]: Nightly Takhkir */}
           <NightlyTakhkirCard
             completed={completedMap.takhkir}
             onToggleComplete={() => toggleDirective('takhkir')}
             onRefreshHistory={() => setHistoryTrigger((prev) => prev + 1)}
           />
 
-          {/* Footer Telemetry Stamp */}
+          {/* Footer Stamp */}
           <footer className="pt-8 text-center text-[11px] font-mono text-gray-500">
-            <p>DIRECTIVE OS • BLICK DESIGN SPECIFICATION</p>
-            <p className="text-gray-600 mt-1">IndexedDB Offline Architecture • Zero Auth • High Performance</p>
+            <p>OPERATOR OS // KONGAD PROTOCOL • JAN 01, 2027 TARGET</p>
+            <p className="text-gray-600 mt-1">IndexedDB Offline Architecture • Winston Voice AI • Blick Aesthetics</p>
           </footer>
         </main>
       </div>

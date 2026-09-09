@@ -3,7 +3,7 @@ import Dexie, { Table } from 'dexie';
 export interface DirectiveState {
   id?: number;
   dateStr: string; // Format: YYYY-MM-DD
-  directiveId: 'crucible' | 'recon' | 'physical' | 'systems' | 'takhkir';
+  directiveId: 'crucible' | 'mission' | 'recon' | 'physical' | 'systems' | 'takhkir';
   completed: boolean;
   completedAt?: string;
   metadata?: Record<string, unknown>;
@@ -32,7 +32,7 @@ export interface DebriefEntry {
 export interface AlarmSetting {
   id: string;
   label: string;
-  time: string; // "08:00", "13:30", "17:30", "21:30"
+  time: string; // "08:00", "10:00", "12:30", "17:30", "21:30"
   enabled: boolean;
 }
 
