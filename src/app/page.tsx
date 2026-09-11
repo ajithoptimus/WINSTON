@@ -10,6 +10,7 @@ import PhysicalArmorCard from '@/components/PhysicalArmorCard';
 import NightlyTakhkirCard from '@/components/NightlyTakhkirCard';
 import DebriefHistoryModal from '@/components/DebriefHistoryModal';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
+import TacticalNotesCard from '@/components/TacticalNotesCard';
 import { db, getTodayDateStr } from '@/lib/db';
 import { getDeterministicDirectives } from '@/lib/directives';
 
@@ -103,6 +104,10 @@ export default function Home() {
               {completedCount} / 5 DIRECTIVES COMPLETE
             </span>
           </div>
+
+          {/* Tactical Notes & Tomorrow's Blueprint Section */}
+          <TacticalNotesCard />
+
 
           {/* Card 1 [08:00 AM]: Morning Crucible */}
           <MorningCrucibleCard

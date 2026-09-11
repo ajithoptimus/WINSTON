@@ -36,11 +36,21 @@ export interface AlarmSetting {
   enabled: boolean;
 }
 
+export interface NoteEntry {
+  id?: number;
+  dateStr: string; // Format: YYYY-MM-DD
+  createdAt: string;
+  content: string;
+  priority: 'critical' | 'strategic' | 'general';
+  completed: boolean;
+}
+
 export class DirectiveOSDatabase extends Dexie {
   directives!: Table<DirectiveState>;
   gymLogs!: Table<GymLogEntry>;
   debriefs!: Table<DebriefEntry>;
   settings!: Table<{ key: string; value: unknown }>;
+  notes!: Table<NoteEntry>;
 
   constructor() {
     super('DirectiveOSDB');
@@ -49,6 +59,13 @@ export class DirectiveOSDatabase extends Dexie {
       gymLogs: '++id, dateStr, exercise',
       debriefs: '++id, dateStr, timestamp',
       settings: 'key',
+    });
+    this.version(2).stores({
+      directives: '++id, dateStr, directiveId, completed, [dateStr+directiveId]',
+      gymLogs: '++id, dateStr, exercise',
+      debriefs: '++id, dateStr, timestamp',
+      settings: 'key',
+      notes: '++id, dateStr, priority, completed, createdAt',
     });
   }
 }
@@ -62,3 +79,13 @@ export function getTodayDateStr(): string {
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+export function getTomorrowDateStr(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
