@@ -13,13 +13,13 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'WINSTON OS // KONGAD PROTOCOL | Synthetic Tactical Intelligence',
-  description: 'Synthetic tactical intelligence and protocol dashboard inspired by Edmond Kirsch\'s Winston AI, featuring 100% offline IndexedDB architecture, Web Bluetooth smart telemetry, and Jan 1, 2027 countdown.',
+  title: 'WINSTON | Synthetic Tactical Intelligence & Protocol Engine',
+  description: 'Synthetic tactical intelligence and daily protocol dashboard inspired by Edmond Kirsch\'s Winston AI in Dan Brown\'s Origin.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'WINSTON OS',
+    title: 'WINSTON',
   },
 };
 

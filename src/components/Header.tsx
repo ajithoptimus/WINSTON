@@ -56,7 +56,7 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-extrabold text-sm tracking-wider text-[#f0f0f0] blick-gradient-text">
-                  WINSTON OS
+                  WINSTON
                 </h1>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/[0.05] text-[#e38b6c] border border-[#e38b6c]/30">
                   {completedCount}/5 COMPLETED

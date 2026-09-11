@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: operator-os-kongad
+    name: winston
     env: node
     plan: free
     buildCommand: npm install && npm run build
