@@ -2,13 +2,13 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'DIRECTIVE OS',
-    short_name: 'DIRECTIVE',
-    description: 'Automated weightless daily protocol dashboard & high-performance operational tracker',
+    name: 'WINSTON OS // KONGAD PROTOCOL',
+    short_name: 'WINSTON OS',
+    description: 'Synthetic tactical intelligence and daily protocol dashboard inspired by Edmond Kirsch\'s Winston AI',
     start_url: '/',
     display: 'standalone',
-    background_color: '#07090E',
-    theme_color: '#07090E',
+    background_color: '#040711',
+    theme_color: '#040711',
     orientation: 'portrait',
     icons: [
       {

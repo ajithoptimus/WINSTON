@@ -74,7 +74,7 @@ export default function Home() {
     }
   };
 
-  const { drill, recon } = getDeterministicDirectives(todayStr || '2026-09-09');
+  const { drill, recon } = getDeterministicDirectives(todayStr || '2026-09-11');
   const completedCount = Object.values(completedMap).filter(Boolean).length;
 
   return (
@@ -97,7 +97,7 @@ export default function Home() {
           <div className="p-3.5 rounded-xl blick-card flex items-center justify-between gap-3 text-xs border border-white/10">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="font-mono text-gray-300">OPERATOR OS // KONGAD PROTOCOL</span>
+              <span className="font-mono text-gray-300">WINSTON OS // KONGAD PROTOCOL</span>
             </div>
             <span className="font-mono text-cyan-400 font-bold px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
               {completedCount} / 5 DIRECTIVES COMPLETE
@@ -139,8 +139,8 @@ export default function Home() {
 
           {/* Footer Stamp */}
           <footer className="pt-8 text-center text-[11px] font-mono text-gray-500">
-            <p>OPERATOR OS // KONGAD PROTOCOL • JAN 01, 2027 TARGET</p>
-            <p className="text-gray-600 mt-1">IndexedDB Offline Architecture • Winston Voice AI • Blick Aesthetics</p>
+            <p>WINSTON OS // KONGAD PROTOCOL • SYNTHETIC TACTICAL INTELLIGENCE</p>
+            <p className="text-gray-600 mt-1">Inspired by Edmond Kirsch &apos;s Winston AI • JAN 01, 2027 TARGET</p>
           </footer>
         </main>
       </div>

@@ -13,18 +13,18 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'DIRECTIVE OS | Weightless Daily Protocol Dashboard',
-  description: 'Automated weightless daily protocol dashboard featuring 5 growth tracks, IndexedDB offline persistence, and anti-gravity design.',
+  title: 'WINSTON OS // KONGAD PROTOCOL | Synthetic Tactical Intelligence',
+  description: 'Synthetic tactical intelligence and protocol dashboard inspired by Edmond Kirsch\'s Winston AI, featuring 100% offline IndexedDB architecture, Web Bluetooth smart telemetry, and Jan 1, 2027 countdown.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'DIRECTIVE OS',
+    title: 'WINSTON OS',
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#07090E',
+  themeColor: '#040711',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -38,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} dark`}>
-      <body className="bg-[#07090E] text-white font-sans antialiased min-h-screen">
+      <body className="bg-[#040711] text-white font-sans antialiased min-h-screen">
         {children}
       </body>
     </html>

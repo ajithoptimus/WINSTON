@@ -42,21 +42,21 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full px-6 py-4 bg-[#080808]/80 backdrop-blur-2xl border-b border-white/[0.06]">
+      <header className="sticky top-0 z-40 w-full px-6 py-4 bg-[#040711]/80 backdrop-blur-2xl border-b border-white/[0.06]">
         <div className="max-w-xl mx-auto flex items-center justify-between">
           
           {/* Logo & Telemetry */}
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg blick-gradient-bg p-[1px] shadow-lg shadow-[#e38b6c]/20">
-              <div className="w-full h-full bg-[#080808] rounded-[7px] flex items-center justify-center font-extrabold text-[#f0f0f0] text-sm">
-                D
+              <div className="w-full h-full bg-[#040711] rounded-[7px] flex items-center justify-center font-extrabold text-[#f0f0f0] text-sm">
+                W
               </div>
             </div>
 
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-extrabold text-sm tracking-wider text-[#f0f0f0] blick-gradient-text">
-                  DIRECTIVE OS
+                  WINSTON OS
                 </h1>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/[0.05] text-[#e38b6c] border border-[#e38b6c]/30">
                   {completedCount}/5 COMPLETED
@@ -80,7 +80,7 @@ export default function Header({ onOpenHistory, completedCount }: HeaderProps) {
               title="Winston Voice Briefing"
             >
               <Volume2 className="w-3.5 h-3.5 text-[#e38b6c]" />
-              <span className="hidden sm:inline">Winston</span>
+              <span className="hidden sm:inline">Voice</span>
             </button>
 
             <button
