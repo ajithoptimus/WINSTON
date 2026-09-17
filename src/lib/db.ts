@@ -38,11 +38,14 @@ export interface AlarmSetting {
 
 export interface NoteEntry {
   id?: number;
+  title?: string;
+  content?: string;
   dateStr: string; // Format: YYYY-MM-DD
   createdAt: string;
-  content: string;
+  updatedAt?: string;
   priority: 'critical' | 'strategic' | 'general';
   completed: boolean;
+  category?: string;
 }
 
 export class DirectiveOSDatabase extends Dexie {
@@ -66,6 +69,13 @@ export class DirectiveOSDatabase extends Dexie {
       debriefs: '++id, dateStr, timestamp',
       settings: 'key',
       notes: '++id, dateStr, priority, completed, createdAt',
+    });
+    this.version(3).stores({
+      directives: '++id, dateStr, directiveId, completed, [dateStr+directiveId]',
+      gymLogs: '++id, dateStr, exercise',
+      debriefs: '++id, dateStr, timestamp',
+      settings: 'key',
+      notes: '++id, dateStr, priority, completed, category, createdAt',
     });
   }
 }
