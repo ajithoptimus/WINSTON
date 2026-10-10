@@ -2,7 +2,7 @@ import Dexie, { Table } from 'dexie';
 
 export interface DirectiveState {
   id?: number;
-  dateStr: string; // Format: YYYY-MM-DD
+  dateStr: string;
   directiveId: 'crucible' | 'mission' | 'recon' | 'physical' | 'systems' | 'takhkir';
   completed: boolean;
   completedAt?: string;
@@ -32,7 +32,7 @@ export interface DebriefEntry {
 export interface AlarmSetting {
   id: string;
   label: string;
-  time: string; // "08:00", "10:00", "12:30", "17:30", "21:30"
+  time: string;
   enabled: boolean;
 }
 
@@ -40,12 +40,54 @@ export interface NoteEntry {
   id?: number;
   title?: string;
   content?: string;
-  dateStr: string; // Format: YYYY-MM-DD
+  dateStr: string;
   createdAt: string;
   updatedAt?: string;
   priority: 'critical' | 'strategic' | 'general';
   completed: boolean;
   category?: string;
+}
+
+// ---- WINSTON v2 NEW TABLES ----
+
+export interface ChatMessage {
+  id?: number;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+  sessionId: string;
+  language?: 'english' | 'malayalam';
+  hasScreenshot?: boolean;
+  screenshotData?: string;
+}
+
+export interface DailyTrackProgress {
+  id?: number;
+  dateStr: string;
+  trackId: 'ai-career' | 'mentalism' | 'physical';
+  questionId: string;
+  completed: boolean;
+  completedAt?: string;
+  notes?: string;
+}
+
+export interface WorkoutLog {
+  id?: number;
+  dateStr: string;
+  createdAt: string;
+  category: 'boxing' | 'strength' | 'endurance' | 'mobility' | 'presentation';
+  exercise: string;
+  details: string;
+  duration?: number;
+  rpe?: number;
+}
+
+export interface StreakData {
+  id?: number;
+  dateStr: string;
+  tracksCompleted: string[];
+  totalTasks: number;
+  completedTasks: number;
 }
 
 export class DirectiveOSDatabase extends Dexie {
@@ -54,6 +96,10 @@ export class DirectiveOSDatabase extends Dexie {
   debriefs!: Table<DebriefEntry>;
   settings!: Table<{ key: string; value: unknown }>;
   notes!: Table<NoteEntry>;
+  chatMessages!: Table<ChatMessage>;
+  dailyTrackProgress!: Table<DailyTrackProgress>;
+  workoutLogs!: Table<WorkoutLog>;
+  streaks!: Table<StreakData>;
 
   constructor() {
     super('DirectiveOSDB');
@@ -77,6 +123,17 @@ export class DirectiveOSDatabase extends Dexie {
       settings: 'key',
       notes: '++id, dateStr, priority, completed, category, createdAt',
     });
+    this.version(4).stores({
+      directives: '++id, dateStr, directiveId, completed, [dateStr+directiveId]',
+      gymLogs: '++id, dateStr, exercise',
+      debriefs: '++id, dateStr, timestamp',
+      settings: 'key',
+      notes: '++id, dateStr, priority, completed, category, createdAt',
+      chatMessages: '++id, sessionId, timestamp, role',
+      dailyTrackProgress: '++id, dateStr, trackId, questionId, completed, [dateStr+trackId]',
+      workoutLogs: '++id, dateStr, category, createdAt',
+      streaks: '++id, dateStr',
+    });
   }
 }
 
@@ -99,3 +156,7 @@ export function getTomorrowDateStr(): string {
   return `${year}-${month}-${day}`;
 }
 
+export function getSessionId(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}

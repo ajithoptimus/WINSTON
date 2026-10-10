@@ -1,0 +1,6 @@
+{
+  "server_url": "http://localhost:3000",
+  "pairing_token": "winston-kongad-2027",
+  "heartbeat_interval": 3,
+  "capture_quality": 70
+}
