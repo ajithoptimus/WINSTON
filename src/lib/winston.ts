@@ -1,5 +1,5 @@
-// Winston Tactical Voice Engine for DIRECTIVE OS
-// Uses Web Speech Synthesis API for calm, British-accented tactical briefings & timer alerts
+// Winston Tactical Voice Engine for DIRECTIVE OS & WINSTON v2
+// Uses Web Speech Synthesis API for calm British AI speech & Malayalam pronunciation
 
 export interface WinstonVoiceConfig {
   enabled: boolean;
@@ -9,44 +9,63 @@ export interface WinstonVoiceConfig {
 
 const DEFAULT_CONFIG: WinstonVoiceConfig = {
   enabled: true,
-  rate: 0.95, // Slightly measured pacing
-  pitch: 0.9,  // Slightly deeper tone
+  rate: 0.95,
+  pitch: 0.9,
 };
 
-let selectedVoice: SpeechSynthesisVoice | null = null;
-
-function getWinstonVoice(): SpeechSynthesisVoice | null {
+function getVoiceForLanguage(lang: 'english' | 'malayalam'): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
 
-  if (selectedVoice) return selectedVoice;
-
   const voices = window.speechSynthesis.getVoices();
-  // Prefer British English voice for Winston persona (e.g. Daniel, Oliver, Arthur, en-GB)
+  if (!voices || voices.length === 0) return null;
+
+  if (lang === 'malayalam') {
+    // Look for Malayalam voice (ml-IN, ml)
+    const malayalamVoice = voices.find(
+      (v) => v.lang.startsWith('ml') || v.lang.toLowerCase().includes('malayalam')
+    );
+    if (malayalamVoice) return malayalamVoice;
+
+    // Fallback for Indian accent if specific Malayalam voice isn't installed
+    const indianVoice = voices.find((v) => v.lang.includes('IN') || v.lang.includes('hi-IN'));
+    if (indianVoice) return indianVoice;
+  }
+
+  // British English for Winston persona (e.g. Daniel, Oliver, Arthur, en-GB)
   const britishVoice = voices.find(
-    (v) => v.lang.includes('en-GB') || v.name.includes('Daniel') || v.name.includes('Oliver') || v.name.includes('UK')
+    (v) =>
+      v.lang.includes('en-GB') ||
+      v.name.includes('Daniel') ||
+      v.name.includes('Oliver') ||
+      v.name.includes('UK') ||
+      v.name.includes('British')
   );
+  if (britishVoice) return britishVoice;
 
   const englishVoice = voices.find((v) => v.lang.startsWith('en'));
-
-  selectedVoice = britishVoice || englishVoice || voices[0] || null;
-  return selectedVoice;
+  return englishVoice || voices[0] || null;
 }
 
-/** Speak a text message using the Winston persona */
-export function speakWinston(text: string) {
+/** Speak a text message using the Winston persona (English or Malayalam) */
+export function speakWinston(text: string, language: 'english' | 'malayalam' = 'english') {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
   try {
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    const voice = getWinstonVoice();
+    // Strip markdown formatting symbols for cleaner speech
+    const cleanText = text
+      .replace(/[*_#`~>[\]]/g, '')
+      .replace(/\n+/g, ' ')
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    const voice = getVoiceForLanguage(language);
     if (voice) {
       utterance.voice = voice;
     }
-
-    utterance.rate = DEFAULT_CONFIG.rate;
+    utterance.lang = language === 'malayalam' ? 'ml-IN' : 'en-GB';
+    utterance.rate = language === 'malayalam' ? 0.9 : DEFAULT_CONFIG.rate;
     utterance.pitch = DEFAULT_CONFIG.pitch;
     utterance.volume = 1.0;
 
@@ -56,6 +75,22 @@ export function speakWinston(text: string) {
   }
 }
 
+/** Stop any active Winston speech */
+export function stopWinstonSpeech() {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+  } catch (e) {
+    console.warn('Speech cancellation error', e);
+  }
+}
+
+/** Check if speech synthesis is currently active */
+export function isWinstonSpeaking(): boolean {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
+  return window.speechSynthesis.speaking;
+}
+
 /** Speak full Winston morning protocol briefing */
 export function speakWinstonBriefing(dateStr: string, drillTitle: string, reconCue: string) {
   const text = `Good day, Operator. Protocol for ${dateStr} is active. Directive 01 is ${drillTitle}. Daytime Recon focus: ${reconCue}. All systems operational.`;
@@ -63,7 +98,10 @@ export function speakWinstonBriefing(dateStr: string, drillTitle: string, reconC
 }
 
 /** Tactical timer alerts for Boxing & Cognitive Drills */
-export function speakWinstonTimerAlert(alertType: 'work_start' | 'rest_start' | 'drill_halfway' | 'drill_complete', roundNum?: number) {
+export function speakWinstonTimerAlert(
+  alertType: 'work_start' | 'rest_start' | 'drill_halfway' | 'drill_complete',
+  roundNum?: number
+) {
   switch (alertType) {
     case 'work_start':
       speakWinston(`Work round ${roundNum || 1} initiated. Maintain posture and strike frequency.`);
