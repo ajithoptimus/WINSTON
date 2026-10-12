@@ -43,3 +43,6 @@ next-env.d.ts
 # winston agent
 *.log
 pc-agent/STOP
+dist/
+build/
+*.spec
