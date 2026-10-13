@@ -524,21 +524,27 @@ export default function WinstonChat() {
               type="button"
               onClick={handleScreenCapture}
               disabled={isCapturing}
-              className={`p-2.5 rounded-xl border transition flex-shrink-0 ${
+              className={`px-3 py-2.5 rounded-xl border transition flex-shrink-0 flex items-center gap-1.5 font-mono text-[11px] font-bold ${
                 desktopStatus.online
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25'
                   : 'bg-white/[0.03] border-white/10 text-gray-500 hover:text-white'
               }`}
               title={
                 desktopStatus.online
-                  ? 'Inspect PC Screen Now'
+                  ? 'Capture PC Screen Now'
                   : 'Desktop offline - Click to see instructions'
               }
             >
               {isCapturing ? (
-                <Loader2 className="w-4 h-4 animate-spin text-[#e38b6c]" />
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#e38b6c]" />
+                  <span>Capturing...</span>
+                </>
               ) : (
-                <Camera className="w-4 h-4" />
+                <>
+                  <Camera className="w-4 h-4" />
+                  <span>Capture Screen</span>
+                </>
               )}
             </button>
 

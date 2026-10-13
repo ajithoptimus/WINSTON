@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import argparse
 import base64
 import datetime
 import io
 import json
 import logging
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -19,6 +21,7 @@ import requests
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = BASE_DIR / "config.json"
 STOP_FILE = BASE_DIR / "STOP"
+PID_FILE = BASE_DIR / "agent.pid"
 LOG_FILE = BASE_DIR / "winston_agent.log"
 
 logging.basicConfig(
@@ -46,26 +49,41 @@ def load_config() -> dict[str, Any]:
     return default_config
 
 
+def save_config(cfg: dict[str, Any]) -> None:
+    try:
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+    except Exception as e:
+        logging.error(f"Error saving config.json: {e}")
+
+
 def capture_primary_screen(quality: int = 70) -> str:
-    """Capture the primary monitor and return a base64-encoded JPEG."""
+    """Capture the primary monitor silently and return a base64-encoded JPEG."""
     with mss.mss() as sct:
-        # monitor 1 is primary monitor
         monitor = sct.monitors[1] if len(sct.monitors) > 1 else sct.monitors[0]
         sct_img = sct.grab(monitor)
-
-        # Convert to PIL Image (mss is BGRA)
         img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
-
-        # Compress to JPEG in memory
         buffer = io.BytesIO()
         img.save(buffer, format="JPEG", quality=quality, optimize=True)
-        img_bytes = buffer.getvalue()
-
-        return base64.b64encode(img_bytes).decode("utf-8")
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 
-def main() -> None:
-    logging.info("WINSTON Desktop Agent starting up...")
+def is_process_running(pid: int) -> bool:
+    """Check if process with given PID is still running on Windows."""
+    try:
+        cmd = f'tasklist /FI "PID eq {pid}"'
+        output = subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.DEVNULL)
+        return str(pid) in output
+    except Exception:
+        return False
+
+
+def run_agent_loop() -> None:
+    """Background agent loop: polls server heartbeat and captures on demand only."""
+    with open(PID_FILE, "w", encoding="utf-8") as f:
+        f.write(str(os.getpid()))
+
+    logging.info(f"WINSTON Desktop Agent started silently. PID: {os.getpid()}")
     config = load_config()
     server_url = config.get("server_url", "http://localhost:3000").rstrip("/")
     token = config.get("pairing_token", "winston-kongad-2027")
@@ -73,57 +91,207 @@ def main() -> None:
     capture_quality = int(config.get("capture_quality", 70))
 
     session = requests.Session()
-    backoff = 1
 
-    while True:
-        # Check for STOP file signal
-        if STOP_FILE.exists():
-            logging.info("STOP file detected. Shutting down gracefully.")
+    try:
+        while True:
+            # Check for STOP file signal
+            if STOP_FILE.exists():
+                logging.info("STOP file detected. Shutting down gracefully.")
+                try:
+                    STOP_FILE.unlink()
+                except Exception:
+                    pass
+                break
+
             try:
-                STOP_FILE.unlink()
+                heartbeat_url = f"{server_url}/api/pc/heartbeat"
+                payload = {"token": token}
+                response = session.post(heartbeat_url, json=payload, timeout=5)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    # Operational control is held by Winston mobile app:
+                    # ONLY capture when explicit trigger arrives
+                    if data.get("capture_requested", False):
+                        logging.info("Explicit capture trigger received from Winston app. Capturing display...")
+                        b64_image = capture_primary_screen(quality=capture_quality)
+                        now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+                        upload_url = f"{server_url}/api/pc/upload"
+                        upload_payload = {
+                            "token": token,
+                            "image": b64_image,
+                            "timestamp": now_iso,
+                        }
+                        session.post(upload_url, json=upload_payload, timeout=15)
+                        logging.info("Screen buffer uploaded successfully to Winston.")
+
+            except Exception as err:
+                logging.debug(f"Connection heartbeat error: {err}")
+
+            time.sleep(heartbeat_interval)
+
+    finally:
+        if PID_FILE.exists():
+            try:
+                PID_FILE.unlink()
             except Exception:
                 pass
-            break
+        logging.info("WINSTON Desktop Agent terminated.")
+        sys.exit(0)
 
+
+def start_silent_agent() -> None:
+    """Launch the agent silently in the background with zero visible UI."""
+    if STOP_FILE.exists():
         try:
-            heartbeat_url = f"{server_url}/api/pc/heartbeat"
-            payload = {"token": token}
-            response = session.post(heartbeat_url, json=payload, timeout=5)
+            STOP_FILE.unlink()
+        except Exception:
+            pass
 
-            if response.status_code == 200:
-                backoff = 1
-                data = response.json()
-                if data.get("capture_requested", False):
-                    logging.info("Capture requested by mobile operator. Snapping screen...")
-                    b64_image = capture_primary_screen(quality=capture_quality)
-                    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    # Check if already running
+    if PID_FILE.exists():
+        try:
+            with open(PID_FILE, "r", encoding="utf-8") as f:
+                pid = int(f.read().strip())
+            if is_process_running(pid):
+                print(f"[WINSTON] Agent is already running silently (PID: {pid}).")
+                check_status()
+                return
+        except Exception:
+            pass
 
-                    upload_url = f"{server_url}/api/pc/upload"
-                    upload_payload = {
-                        "token": token,
-                        "image": b64_image,
-                        "timestamp": now_iso,
-                    }
-                    upload_res = session.post(upload_url, json=upload_payload, timeout=15)
-                    if upload_res.status_code == 200:
-                        logging.info("Screenshot uploaded successfully.")
-                    else:
-                        logging.warning(f"Upload returned status {upload_res.status_code}")
-            else:
-                logging.warning(f"Heartbeat responded with status code: {response.status_code}")
-                backoff = min(backoff * 1.5, 30)
+    agent_script = str(Path(__file__).resolve())
+    cmd = [sys.executable, agent_script, "run"]
 
-        except requests.exceptions.RequestException as req_err:
-            logging.debug(f"Connection error to {server_url}: {req_err}")
-            backoff = min(backoff * 1.5, 30)
-        except Exception as err:
-            logging.error(f"Unexpected error in agent loop: {err}")
-            backoff = min(backoff * 1.5, 30)
+    flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
-        time.sleep(heartbeat_interval)
+    proc = subprocess.Popen(
+        cmd,
+        cwd=str(BASE_DIR),
+        creationflags=flags,
+    )
 
-    logging.info("WINSTON Desktop Agent terminated.")
-    sys.exit(0)
+    with open(PID_FILE, "w", encoding="utf-8") as f:
+        f.write(str(proc.pid))
+
+    print("=====================================================")
+    print("      WINSTON DESKTOP AGENT (SILENT RELAY)")
+    print("=====================================================")
+    print(f"[*] Agent started in background (PID: {proc.pid})")
+    print("[*] Visual footprint: ZERO (No windows, no popups)")
+    print("[*] Mode: Standby - Winston holds full operational control.")
+    print("-----------------------------------------------------")
+
+    # Wait 2 seconds for first heartbeat to register with server
+    time.sleep(2.5)
+    check_status()
+
+
+def stop_agent() -> None:
+    """Stop the background silent agent."""
+    with open(STOP_FILE, "w", encoding="utf-8") as f:
+        f.write("STOP")
+
+    if PID_FILE.exists():
+        try:
+            with open(PID_FILE, "r", encoding="utf-8") as f:
+                pid = int(f.read().strip())
+            subprocess.run(
+                f"taskkill /F /PID {pid}",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except Exception:
+            pass
+
+    subprocess.run(
+        'taskkill /F /IM pythonw.exe /FI "WINDOWTITLE eq "',
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    if PID_FILE.exists():
+        try:
+            PID_FILE.unlink()
+        except Exception:
+            pass
+
+    print("[WINSTON] Desktop agent stopped successfully.")
+
+
+def check_status() -> None:
+    """Check agent and server connection status."""
+    cfg = load_config()
+    server_url = cfg.get("server_url", "http://localhost:3000").rstrip("/")
+
+    local_running = False
+    pid_str = "Active"
+    if PID_FILE.exists():
+        try:
+            with open(PID_FILE, "r", encoding="utf-8") as f:
+                pid = int(f.read().strip())
+                if is_process_running(pid):
+                    local_running = True
+                    pid_str = str(pid)
+        except Exception:
+            pass
+
+    server_online = False
+    try:
+        r = requests.get(f"{server_url}/api/pc/heartbeat", timeout=3)
+        if r.status_code == 200:
+            server_online = r.json().get("online", False)
+    except Exception:
+        pass
+
+    if server_online:
+        print(f"[STATUS] ONLINE & LINKED (PID: {pid_str})")
+        print(f"[SERVER] Connected to {server_url}")
+        print("[MOBILE] Winston app currently displays: Desktop Linked")
+    elif local_running:
+        print(f"[STATUS] RUNNING LOCALLY (PID: {pid_str}) - Connecting to {server_url}...")
+    else:
+        print("[STATUS] OFFLINE (Agent is not running)")
+        print("[MOBILE] Winston app currently displays: Offline")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="WINSTON Silent Desktop Screen Agent")
+    parser.add_argument(
+        "action",
+        nargs="?",
+        default="start",
+        choices=["start", "stop", "status", "run", "config"],
+        help="Action to perform",
+    )
+    parser.add_argument(
+        "value",
+        nargs="?",
+        default="",
+        help="Optional value (e.g. server URL for config)",
+    )
+    args = parser.parse_args()
+
+    if args.action == "start":
+        start_silent_agent()
+    elif args.action == "stop":
+        stop_agent()
+    elif args.action == "status":
+        check_status()
+    elif args.action == "run":
+        run_agent_loop()
+    elif args.action == "config":
+        if args.value:
+            cfg = load_config()
+            cfg["server_url"] = args.value.rstrip("/")
+            save_config(cfg)
+            print(f"[WINSTON] Server URL set to: {cfg['server_url']}")
+        else:
+            cfg = load_config()
+            print(f"[WINSTON] Current Server URL: {cfg['server_url']}")
 
 
 if __name__ == "__main__":

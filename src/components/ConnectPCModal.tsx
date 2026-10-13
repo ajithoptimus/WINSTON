@@ -1,18 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Monitor,
   Camera,
-  CheckCircle2,
-  XCircle,
   RefreshCw,
   Terminal,
-  ShieldCheck,
   Copy,
   Check,
   X,
-  ExternalLink,
 } from 'lucide-react';
 
 interface ConnectPCModalProps {
@@ -61,7 +57,7 @@ export default function ConnectPCModal({
                 DESKTOP LINK &amp; SCREEN RADAR
               </h2>
               <p className="text-[11px] font-mono text-gray-400">
-                Silent Windows Display Inspection Relay
+                Silent Command-Line Agent Relay
               </p>
             </div>
           </div>
@@ -93,12 +89,12 @@ export default function ConnectPCModal({
               />
               <div>
                 <p className="font-mono font-bold text-white text-sm">
-                  {desktopOnline ? 'DESKTOP LINKED & READY' : 'DESKTOP AGENT OFFLINE'}
+                  {desktopOnline ? '● DESKTOP LINKED (ONLINE)' : '○ DESKTOP OFFLINE'}
                 </p>
                 <p className="text-[11px] text-gray-400 font-mono mt-0.5">
                   {desktopOnline
-                    ? `Heartbeat verified (${lastHeartbeat ? new Date(lastHeartbeat).toLocaleTimeString() : 'Active'})`
-                    : 'Waiting for python agent on your PC to connect...'}
+                    ? `Agent standby (${lastHeartbeat ? new Date(lastHeartbeat).toLocaleTimeString() : 'Active'})`
+                    : 'Run launch command in terminal to link your PC...'}
                 </p>
               </div>
             </div>
@@ -110,11 +106,11 @@ export default function ConnectPCModal({
                   : 'border-amber-500/40 text-amber-300 bg-amber-500/20'
               }`}
             >
-              {desktopOnline ? '● Online' : '○ Standby'}
+              {desktopOnline ? '● Linked' : '○ Offline'}
             </span>
           </div>
 
-          {/* Action Trigger Button */}
+          {/* Capture Screen Trigger */}
           <div>
             <button
               onClick={() => {
@@ -131,85 +127,82 @@ export default function ConnectPCModal({
               {isCapturing ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Capturing &amp; Analyzing Screen...</span>
+                  <span>Capturing Screen...</span>
                 </>
               ) : (
                 <>
                   <Camera className="w-4 h-4" />
-                  <span>Inspect Screen &amp; Solve</span>
+                  <span>Capture Screen</span>
                 </>
               )}
             </button>
             <p className="text-[11px] text-gray-500 text-center font-mono mt-2">
-              Silently grabs primary monitor frame &amp; analyzes questions/code via Groq Vision
+              Winston holds full operational control — captures only when you tap above.
             </p>
           </div>
 
-          {/* Quick Setup Instructions */}
+          {/* Terminal Commands */}
           <div className="space-y-3 pt-2 border-t border-white/[0.08]">
             <h3 className="font-mono text-xs font-bold text-gray-300 uppercase flex items-center gap-2">
               <Terminal className="w-3.5 h-3.5 text-[#e38b6c]" />
-              <span>How to Start the Agent on Your PC</span>
+              <span>Command Prompt Controls (Zero UI / Silent)</span>
             </h3>
 
             <div className="space-y-2.5">
-              {/* Option 1: Desktop Shortcut */}
+              {/* Start Command */}
               <div className="p-3 rounded-lg bg-[#080808] border border-white/10 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono font-semibold text-gray-300 text-[11px]">
-                    1. 1-Click Desktop Shortcut (Already Created)
-                  </span>
-                </div>
-                <p className="text-[11px] text-gray-400 font-sans">
-                  Double-click <strong className="text-white">START_WINSTON_AGENT.bat</strong> on your Windows Desktop. It runs silently with zero console window.
-                </p>
-              </div>
-
-              {/* Option 2: Folder Location */}
-              <div className="p-3 rounded-lg bg-[#080808] border border-white/10 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono font-semibold text-gray-300 text-[11px]">
-                    2. Folder Location
+                  <span className="font-mono font-semibold text-emerald-400 text-[11px]">
+                    ▶ Start Silent Agent (in CMD)
                   </span>
                   <button
-                    onClick={() =>
-                      copyToClipboard(
-                        'C:\\Users\\91799\\.gemini\\antigravity\\scratch\\directive-os\\pc-agent',
-                        'path'
-                      )
-                    }
+                    onClick={() => copyToClipboard('winston start', 'start')}
                     className="text-[10px] font-mono text-[#e38b6c] hover:underline flex items-center gap-1"
                   >
-                    {copied === 'path' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    <span>{copied === 'path' ? 'Copied' : 'Copy Path'}</span>
+                    {copied === 'start' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    <span>{copied === 'start' ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
-                <code className="block p-1.5 rounded bg-black/60 text-gray-300 font-mono text-[10px] break-all border border-white/5">
-                  C:\Users\91799\.gemini\antigravity\scratch\directive-os\pc-agent
+                <code className="block p-2 rounded bg-black/60 text-emerald-300 font-mono text-xs border border-white/5">
+                  winston start
                 </code>
               </div>
 
-              {/* Option 3: Terminal Command */}
+              {/* Stop Command */}
               <div className="p-3 rounded-lg bg-[#080808] border border-white/10 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono font-semibold text-gray-300 text-[11px]">
-                    3. Command to Run Directly
+                  <span className="font-mono font-semibold text-rose-400 text-[11px]">
+                    ⏹ Stop Silent Agent (in CMD)
                   </span>
                   <button
-                    onClick={() =>
-                      copyToClipboard(
-                        'cd C:\\Users\\91799\\.gemini\\antigravity\\scratch\\directive-os\\pc-agent && python winston_agent.py',
-                        'cmd'
-                      )
-                    }
+                    onClick={() => copyToClipboard('winston stop', 'stop')}
                     className="text-[10px] font-mono text-[#e38b6c] hover:underline flex items-center gap-1"
                   >
-                    {copied === 'cmd' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    <span>{copied === 'cmd' ? 'Copied' : 'Copy Cmd'}</span>
+                    {copied === 'stop' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    <span>{copied === 'stop' ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
-                <code className="block p-1.5 rounded bg-black/60 text-emerald-400 font-mono text-[10px] break-all border border-white/5">
-                  cd C:\Users\91799\.gemini\antigravity\scratch\directive-os\pc-agent &amp;&amp; python winston_agent.py
+                <code className="block p-2 rounded bg-black/60 text-rose-300 font-mono text-xs border border-white/5">
+                  winston stop
+                </code>
+              </div>
+
+              {/* Status Command */}
+              <div className="p-3 rounded-lg bg-[#080808] border border-white/10 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-semibold text-cyan-400 text-[11px]">
+                    ℹ Check Agent Status (in CMD)
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard('winston status', 'status')}
+                    className="text-[10px] font-mono text-[#e38b6c] hover:underline flex items-center gap-1"
+                  >
+                    {copied === 'status' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    <span>{copied === 'status' ? 'Copied' : 'Copy'}</span>
+                  </button>
+                </div>
+                <code className="block p-2 rounded bg-black/60 text-cyan-300 font-mono text-xs border border-white/5">
+                  winston status
                 </code>
               </div>
             </div>
