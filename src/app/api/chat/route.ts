@@ -12,6 +12,8 @@ interface ChatRequestBody {
   screenQuestion?: string;
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body: ChatRequestBody = await request.json();

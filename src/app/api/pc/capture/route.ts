@@ -6,6 +6,8 @@ let latestScreenshot: string | null = null;
 let screenshotTimestamp: string | null = null;
 let captureStatus: 'idle' | 'pending' | 'ready' = 'idle';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
   // Mobile app requests a capture
   requestCapture();

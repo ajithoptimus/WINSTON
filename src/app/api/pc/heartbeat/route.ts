@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 let lastHeartbeat: number = 0;
 let captureRequested: boolean = false;
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as { token: string };
