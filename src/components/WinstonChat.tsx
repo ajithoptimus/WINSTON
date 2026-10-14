@@ -253,7 +253,9 @@ export default function WinstonChat() {
       setSpeakingMessageId(null);
     } else {
       setSpeakingMessageId(id);
-      speakWinston(text, msgLang || language);
+      speakWinston(text, msgLang || language, () => {
+        setSpeakingMessageId(null);
+      });
     }
   };
 

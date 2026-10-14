@@ -1,100 +1,149 @@
 // Winston Tactical Voice Engine for DIRECTIVE OS & WINSTON v2
-// Uses Web Speech Synthesis API for calm British AI speech & Malayalam pronunciation
+// High-fidelity Neural Audio Engine with native Malayalam & British English TTS
 
-export interface WinstonVoiceConfig {
-  enabled: boolean;
-  rate: number;
-  pitch: number;
+let currentAudio: HTMLAudioElement | null = null;
+let currentObjectUrl: string | null = null;
+let isAudioPlaying = false;
+
+function cleanTextForSpeech(raw: string): string {
+  return raw
+    .replace(/```[\s\S]*?```/g, '') // strip code blocks
+    .replace(/`[^`]+`/g, '') // strip inline code
+    .replace(/[*_#~>[\]]/g, ' ') // strip markdown formatting
+    .replace(/https?:\/\/\S+/g, '') // strip urls
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-const DEFAULT_CONFIG: WinstonVoiceConfig = {
-  enabled: true,
-  rate: 0.95,
-  pitch: 0.9,
-};
-
-function getVoiceForLanguage(lang: 'english' | 'malayalam'): SpeechSynthesisVoice | null {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
-
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices || voices.length === 0) return null;
-
-  if (lang === 'malayalam') {
-    // Look for Malayalam voice (ml-IN, ml)
-    const malayalamVoice = voices.find(
-      (v) => v.lang.startsWith('ml') || v.lang.toLowerCase().includes('malayalam')
-    );
-    if (malayalamVoice) return malayalamVoice;
-
-    // Fallback for Indian accent if specific Malayalam voice isn't installed
-    const indianVoice = voices.find((v) => v.lang.includes('IN') || v.lang.includes('hi-IN'));
-    if (indianVoice) return indianVoice;
-  }
-
-  // British English for Winston persona (e.g. Daniel, Oliver, Arthur, en-GB)
-  const britishVoice = voices.find(
-    (v) =>
-      v.lang.includes('en-GB') ||
-      v.name.includes('Daniel') ||
-      v.name.includes('Oliver') ||
-      v.name.includes('UK') ||
-      v.name.includes('British')
-  );
-  if (britishVoice) return britishVoice;
-
-  const englishVoice = voices.find((v) => v.lang.startsWith('en'));
-  return englishVoice || voices[0] || null;
-}
-
-/** Speak a text message using the Winston persona (English or Malayalam) */
-export function speakWinston(text: string, language: 'english' | 'malayalam' = 'english') {
+/** Fallback to browser SpeechSynthesis if network TTS is unreachable */
+function speakViaSpeechSynthesis(text: string, language: 'english' | 'malayalam', onEnd?: () => void) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
   try {
     window.speechSynthesis.cancel();
-
-    // Strip markdown formatting symbols for cleaner speech
-    const cleanText = text
-      .replace(/[*_#`~>[\]]/g, '')
-      .replace(/\n+/g, ' ')
-      .trim();
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    const voice = getVoiceForLanguage(language);
-    if (voice) {
-      utterance.voice = voice;
-    }
+    const utterance = new SpeechSynthesisUtterance(cleanTextForSpeech(text));
     utterance.lang = language === 'malayalam' ? 'ml-IN' : 'en-GB';
-    utterance.rate = language === 'malayalam' ? 0.9 : DEFAULT_CONFIG.rate;
-    utterance.pitch = DEFAULT_CONFIG.pitch;
-    utterance.volume = 1.0;
+    utterance.rate = 0.95;
+
+    if (onEnd) {
+      utterance.onend = onEnd;
+      utterance.onerror = onEnd;
+    }
 
     window.speechSynthesis.speak(utterance);
   } catch (e) {
-    console.warn('Winston speech synthesis error', e);
+    console.warn('Speech synthesis fallback failed:', e);
+    if (onEnd) onEnd();
   }
 }
 
-/** Stop any active Winston speech */
-export function stopWinstonSpeech() {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+/** Speak a text message using Winston's Neural Voice (Malayalam or English) */
+export async function speakWinston(
+  text: string,
+  language: 'english' | 'malayalam' = 'english',
+  onEnd?: () => void
+): Promise<void> {
+  if (typeof window === 'undefined') return;
+
+  stopWinstonSpeech();
+
+  const clean = cleanTextForSpeech(text);
+  if (!clean) {
+    if (onEnd) onEnd();
+    return;
+  }
+
   try {
-    window.speechSynthesis.cancel();
-  } catch (e) {
-    console.warn('Speech cancellation error', e);
+    isAudioPlaying = true;
+
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: clean, language }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`TTS server responded with ${res.status}`);
+    }
+
+    const blob = await res.blob();
+    if (currentObjectUrl) {
+      URL.revokeObjectURL(currentObjectUrl);
+    }
+    currentObjectUrl = URL.createObjectURL(blob);
+
+    const audio = new Audio(currentObjectUrl);
+    currentAudio = audio;
+
+    audio.onended = () => {
+      isAudioPlaying = false;
+      if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl);
+        currentObjectUrl = null;
+      }
+      currentAudio = null;
+      if (onEnd) onEnd();
+    };
+
+    audio.onerror = () => {
+      isAudioPlaying = false;
+      currentAudio = null;
+      // Fallback to local speech synthesis
+      speakViaSpeechSynthesis(clean, language, onEnd);
+    };
+
+    await audio.play();
+  } catch (error) {
+    console.warn('Neural TTS failed, falling back to browser synthesis:', error);
+    isAudioPlaying = false;
+    speakViaSpeechSynthesis(clean, language, onEnd);
   }
 }
 
-/** Check if speech synthesis is currently active */
+/** Stop any active Winston speech playback */
+export function stopWinstonSpeech(): void {
+  if (typeof window === 'undefined') return;
+
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    } catch {
+      // ignore
+    }
+    currentAudio = null;
+  }
+
+  if (currentObjectUrl) {
+    try {
+      URL.revokeObjectURL(currentObjectUrl);
+    } catch {
+      // ignore
+    }
+    currentObjectUrl = null;
+  }
+
+  if ('speechSynthesis' in window) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      // ignore
+    }
+  }
+
+  isAudioPlaying = false;
+}
+
+/** Check if Winston is currently speaking */
 export function isWinstonSpeaking(): boolean {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
-  return window.speechSynthesis.speaking;
+  if (typeof window === 'undefined') return false;
+  return isAudioPlaying || (typeof window.speechSynthesis !== 'undefined' && window.speechSynthesis.speaking);
 }
 
 /** Speak full Winston morning protocol briefing */
 export function speakWinstonBriefing(dateStr: string, drillTitle: string, reconCue: string) {
   const text = `Good day, Operator. Protocol for ${dateStr} is active. Directive 01 is ${drillTitle}. Daytime Recon focus: ${reconCue}. All systems operational.`;
-  speakWinston(text);
+  speakWinston(text, 'english');
 }
 
 /** Tactical timer alerts for Boxing & Cognitive Drills */
@@ -104,16 +153,16 @@ export function speakWinstonTimerAlert(
 ) {
   switch (alertType) {
     case 'work_start':
-      speakWinston(`Work round ${roundNum || 1} initiated. Maintain posture and strike frequency.`);
+      speakWinston(`Work round ${roundNum || 1} initiated. Maintain posture and strike frequency.`, 'english');
       break;
     case 'rest_start':
-      speakWinston(`Rest round active. Control breathing and lower heart rate.`);
+      speakWinston(`Rest round active. Control breathing and lower heart rate.`, 'english');
       break;
     case 'drill_halfway':
-      speakWinston(`Halfway point reached. Sustain focus.`);
+      speakWinston(`Halfway point reached. Sustain focus.`, 'english');
       break;
     case 'drill_complete':
-      speakWinston(`Directive complete. Protocol recorded.`);
+      speakWinston(`Directive complete. Protocol recorded.`, 'english');
       break;
   }
 }
