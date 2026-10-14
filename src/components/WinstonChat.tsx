@@ -315,7 +315,7 @@ export default function WinstonChat() {
                   WINSTON AI
                 </h2>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/[0.05] text-cyan-300 border border-cyan-500/30">
-                  LLaMA 3.3 70B
+                  GPT-OSS 120B
                 </span>
               </div>
               <p className="text-[10px] font-mono text-gray-400">
