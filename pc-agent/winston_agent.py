@@ -168,18 +168,11 @@ def start_silent_agent() -> None:
     agent_script = str(Path(__file__).resolve())
     cmd = [exe_to_use, agent_script, "run"]
 
-    flags = (
-        subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-        if sys.platform == "win32"
-        else 0
-    )
+    flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
     proc = subprocess.Popen(
         cmd,
         cwd=str(BASE_DIR),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        stdin=subprocess.DEVNULL,
         creationflags=flags,
     )
 
