@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
         role: 'system' | 'user';
         content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
       }> = [
-        { role: 'system', content: getVisionSystemPrompt() },
+        { role: 'system', content: getVisionSystemPrompt(language) },
         {
           role: 'user',
           content: [

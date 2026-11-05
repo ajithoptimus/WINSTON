@@ -175,14 +175,25 @@ export default function WinstonChat() {
       return;
     }
 
-    setIsCapturing(true);
+    const userPrompt = input.trim();
+    if (userPrompt) {
+      setInput('');
+    }
+
+    const defaultUserMsg =
+      language === 'malayalam'
+        ? '📸 വിൻസ്റ്റൺ, എന്റെ PC സ്ക്രീൻ പരിശോധിച്ച് ഇപ്പോൾ എന്താണ് കാണുന്നത് എന്ന് പറയൂ.'
+        : '📸 Winston, inspect my PC screen and tell me what is currently displayed.';
+
+    const displayedUserContent = userPrompt ? `📸 ${userPrompt}` : defaultUserMsg;
 
     await db.chatMessages.add({
       role: 'user',
-      content: '📸 Winston, inspect my PC screen and provide the answer or solution.',
+      content: displayedUserContent,
       timestamp: new Date().toISOString(),
       sessionId,
       hasScreenshot: true,
+      language,
     });
 
     try {
@@ -200,6 +211,12 @@ export default function WinstonChat() {
       }
 
       if (screenshot) {
+        const screenQuestion =
+          userPrompt ||
+          (language === 'malayalam'
+            ? 'ഈ PC സ്ക്രീൻ പരിശോധിച്ച് ഇപ്പോൾ സ്ക്രീനിൽ എന്താണ് കാണുന്നത് എന്ന് വ്യക്തമായി വിവരിക്കുക. തുറന്നിരിക്കുന്ന ആപ്പുകൾ, വിൻഡോകൾ, അല്ലെങ്കിൽ വെബ്സൈറ്റുകൾ എന്തെല്ലാമാണെന്ന് പറയുക. കോഡോ ചോദ്യങ്ങളോ ഉണ്ടെങ്കിൽ അവ വിശദീകരിക്കുകയോ പരിഹരിക്കുകയോ ചെയ്യുക.'
+            : 'Carefully examine this PC screen capture. Describe what application, document, website, or window is currently displayed on the screen. If there are any code problems, errors, or questions visible, solve and explain them. If there are no questions or errors, give a clear overview of what is currently on the screen.');
+
         const visionRes = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -207,8 +224,7 @@ export default function WinstonChat() {
             messages: [],
             language,
             screenshot,
-            screenQuestion:
-              'Examine this PC display capture carefully. If there is a coding problem, interview test, or question visible, SOLVE IT directly. If there is an error, diagnose and fix it. Summarize concisely in Winston style.',
+            screenQuestion,
           }),
         });
 
