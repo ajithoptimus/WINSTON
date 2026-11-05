@@ -57,12 +57,85 @@ def save_config(cfg: dict[str, Any]) -> None:
         logging.error(f"Error saving config.json: {e}")
 
 
-def capture_primary_screen(quality: int = 70) -> str:
-    """Capture the primary monitor silently and return a base64-encoded JPEG."""
+def get_monitors_summary() -> list[dict[str, Any]]:
+    """Return friendly metadata of detected physical monitors."""
+    try:
+        with mss.mss() as sct:
+            if len(sct.monitors) <= 2:
+                return [{"id": "primary", "name": "Primary Screen"}]
+            return [
+                {"id": "laptop", "name": "Laptop Screen (Testing)"},
+                {"id": "all", "name": "Both Screens (Stitched)"},
+                {"id": "external", "name": "External Monitor"},
+            ]
+    except Exception:
+        return [{"id": "primary", "name": "Display Screen"}]
+
+
+def capture_screen(target_monitor: str = "laptop", quality: int = 70) -> str:
+    """Capture specified monitor (laptop / external / all) silently and return base64 JPEG."""
     with mss.mss() as sct:
-        monitor = sct.monitors[1] if len(sct.monitors) > 1 else sct.monitors[0]
-        sct_img = sct.grab(monitor)
-        img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+        num_monitors = len(sct.monitors)
+
+        if num_monitors <= 2:
+            # Single monitor setup
+            mon = sct.monitors[1] if num_monitors > 1 else sct.monitors[0]
+            sct_img = sct.grab(mon)
+            img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+        elif target_monitor in ("all", "both", "stitched"):
+            # Stitch all physical monitors horizontally from left to right
+            phys_monitors = sorted(sct.monitors[1:], key=lambda m: m["left"])
+            imgs: list[Image.Image] = []
+            total_w = 0
+            max_h = 0
+            for mon in phys_monitors:
+                raw = sct.grab(mon)
+                im = Image.frombytes("RGB", raw.size, raw.bgra, "raw", "BGRX")
+                imgs.append(im)
+                total_w += im.width
+                max_h = max(max_h, im.height)
+
+            stitched = Image.new("RGB", (total_w, max_h), (20, 20, 20))
+            cur_x = 0
+            for im in imgs:
+                stitched.paste(im, (cur_x, 0))
+                cur_x += im.width
+
+            # Scale proportionally if wider than 2560px for vision API constraints
+            if total_w > 2560:
+                scale = 2560.0 / total_w
+                new_h = int(max_h * scale)
+                img = stitched.resize((2560, new_h), Image.Resampling.LANCZOS)
+            else:
+                img = stitched
+        elif target_monitor in ("laptop", "lap", "secondary", "testing", "2"):
+            # Laptop screen: monitor with left < 0 or index 2
+            laptop_mon = None
+            for idx in range(1, len(sct.monitors)):
+                if sct.monitors[idx]["left"] < 0 or idx == 2:
+                    laptop_mon = sct.monitors[idx]
+                    break
+            if not laptop_mon:
+                laptop_mon = sct.monitors[2] if len(sct.monitors) > 2 else sct.monitors[1]
+            raw = sct.grab(laptop_mon)
+            img = Image.frombytes("RGB", raw.size, raw.bgra, "raw", "BGRX")
+        elif target_monitor in ("monitor", "external", "primary", "1"):
+            # External monitor: monitor with left >= 0 or index 1
+            ext_mon = None
+            for idx in range(1, len(sct.monitors)):
+                if sct.monitors[idx]["left"] >= 0 or idx == 1:
+                    ext_mon = sct.monitors[idx]
+                    break
+            if not ext_mon:
+                ext_mon = sct.monitors[1]
+            raw = sct.grab(ext_mon)
+            img = Image.frombytes("RGB", raw.size, raw.bgra, "raw", "BGRX")
+        else:
+            # Default to laptop screen for dual setups, otherwise monitor 1
+            target_mon = sct.monitors[2] if len(sct.monitors) > 2 else sct.monitors[1]
+            raw = sct.grab(target_mon)
+            img = Image.frombytes("RGB", raw.size, raw.bgra, "raw", "BGRX")
+
         buffer = io.BytesIO()
         img.save(buffer, format="JPEG", quality=quality, optimize=True)
         return base64.b64encode(buffer.getvalue()).decode("utf-8")
@@ -89,6 +162,7 @@ def run_agent_loop() -> None:
     token = config.get("pairing_token", "winston-kongad-2027")
     heartbeat_interval = int(config.get("heartbeat_interval", 3))
     capture_quality = int(config.get("capture_quality", 70))
+    default_monitor = config.get("default_monitor", "laptop")
 
     session = requests.Session()
 
@@ -105,7 +179,11 @@ def run_agent_loop() -> None:
 
             try:
                 heartbeat_url = f"{server_url}/api/pc/heartbeat"
-                payload = {"token": token}
+                monitors_summary = get_monitors_summary()
+                payload = {
+                    "token": token,
+                    "monitors": monitors_summary,
+                }
                 response = session.post(heartbeat_url, json=payload, timeout=5)
 
                 if response.status_code == 200:
@@ -113,8 +191,9 @@ def run_agent_loop() -> None:
                     # Operational control is held by Winston mobile app:
                     # ONLY capture when explicit trigger arrives
                     if data.get("capture_requested", False):
-                        logging.info("Explicit capture trigger received from Winston app. Capturing display...")
-                        b64_image = capture_primary_screen(quality=capture_quality)
+                        target_mon = data.get("target_monitor") or default_monitor
+                        logging.info(f"Explicit capture trigger received from Winston app. Capturing display '{target_mon}'...")
+                        b64_image = capture_screen(target_monitor=target_mon, quality=capture_quality)
                         now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
                         upload_url = f"{server_url}/api/pc/upload"
@@ -124,7 +203,7 @@ def run_agent_loop() -> None:
                             "timestamp": now_iso,
                         }
                         session.post(upload_url, json=upload_payload, timeout=15)
-                        logging.info("Screen buffer uploaded successfully to Winston.")
+                        logging.info(f"Screen buffer for '{target_mon}' uploaded successfully to Winston.")
 
             except Exception as err:
                 logging.debug(f"Connection heartbeat error: {err}")
@@ -166,9 +245,9 @@ def start_silent_agent() -> None:
     exe_to_use = str(pythonw) if pythonw.exists() else sys.executable
 
     agent_script = str(Path(__file__).resolve())
-    cmd = [exe_to_use, agent_script, "run"]
-
-    flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+    flags = 0
+    if sys.platform == "win32":
+        flags = subprocess.CREATE_NO_WINDOW | getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
 
     proc = subprocess.Popen(
         cmd,
@@ -251,14 +330,20 @@ def check_status() -> None:
     except Exception:
         pass
 
+    monitors = get_monitors_summary()
+    mon_str = ", ".join([f"{m['name']} ({m['id']})" for m in monitors])
+
     if server_online:
         print(f"[STATUS] ONLINE & LINKED (PID: {pid_str})")
+        print(f"[DISPLAYS] {mon_str}")
         print(f"[SERVER] Connected to {server_url}")
         print("[MOBILE] Winston app currently displays: Desktop Linked")
     elif local_running:
         print(f"[STATUS] RUNNING LOCALLY (PID: {pid_str}) - Connecting to {server_url}...")
+        print(f"[DISPLAYS] {mon_str}")
     else:
         print("[STATUS] OFFLINE (Agent is not running)")
+        print(f"[DISPLAYS] {mon_str}")
         print("[MOBILE] Winston app currently displays: Offline")
 
 

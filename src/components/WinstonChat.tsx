@@ -24,6 +24,7 @@ import ConnectPCModal from './ConnectPCModal';
 interface DesktopStatus {
   online: boolean;
   lastHeartbeat: string | null;
+  monitors?: Array<{ id: string; name: string }>;
 }
 
 export default function WinstonChat() {
@@ -35,6 +36,7 @@ export default function WinstonChat() {
     online: false,
     lastHeartbeat: null,
   });
+  const [selectedMonitor, setSelectedMonitor] = useState<'laptop' | 'all' | 'external'>('laptop');
   const [isCapturing, setIsCapturing] = useState(false);
   const [isPCModalOpen, setIsPCModalOpen] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
@@ -180,12 +182,19 @@ export default function WinstonChat() {
       setInput('');
     }
 
+    const monitorLabel =
+      selectedMonitor === 'laptop'
+        ? 'Laptop Screen (Testing)'
+        : selectedMonitor === 'external'
+        ? 'External Monitor'
+        : 'Both Displays (Stitched)';
+
     const defaultUserMsg =
       language === 'malayalam'
-        ? '📸 വിൻസ്റ്റൺ, എന്റെ PC സ്ക്രീൻ പരിശോധിച്ച് ഇപ്പോൾ എന്താണ് കാണുന്നത് എന്ന് പറയൂ.'
-        : '📸 Winston, inspect my PC screen and tell me what is currently displayed.';
+        ? `📸 വിൻസ്റ്റൺ, എന്റെ PC ${selectedMonitor === 'laptop' ? 'ലാപ്‌ടോപ്പ് സ്ക്രീൻ (ടെസ്റ്റിംഗ് സ്ക്രീൻ)' : selectedMonitor === 'external' ? 'എക്സ്റ്റേണൽ മോണിറ്റർ' : 'രണ്ട് സ്ക്രീനുകളും'} പരിശോധിച്ച് ചോദ്യങ്ങളോ ഉള്ളടക്കമോ പറയൂ.`
+        : `📸 Winston, inspect my PC ${monitorLabel} and solve any questions or summarize the screen.`;
 
-    const displayedUserContent = userPrompt ? `📸 ${userPrompt}` : defaultUserMsg;
+    const displayedUserContent = userPrompt ? `📸 [${monitorLabel}] ${userPrompt}` : defaultUserMsg;
 
     await db.chatMessages.add({
       role: 'user',
@@ -196,8 +205,14 @@ export default function WinstonChat() {
       language,
     });
 
+    setIsCapturing(true);
+
     try {
-      await fetch('/api/pc/capture', { method: 'POST' });
+      await fetch('/api/pc/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ monitor: selectedMonitor }),
+      });
 
       let screenshot: string | null = null;
       for (let i = 0; i < 30; i++) {
@@ -214,8 +229,8 @@ export default function WinstonChat() {
         const screenQuestion =
           userPrompt ||
           (language === 'malayalam'
-            ? 'ഈ PC സ്ക്രീൻ പരിശോധിച്ച് ഇപ്പോൾ സ്ക്രീനിൽ എന്താണ് കാണുന്നത് എന്ന് വ്യക്തമായി വിവരിക്കുക. തുറന്നിരിക്കുന്ന ആപ്പുകൾ, വിൻഡോകൾ, അല്ലെങ്കിൽ വെബ്സൈറ്റുകൾ എന്തെല്ലാമാണെന്ന് പറയുക. കോഡോ ചോദ്യങ്ങളോ ഉണ്ടെങ്കിൽ അവ വിശദീകരിക്കുകയോ പരിഹരിക്കുകയോ ചെയ്യുക.'
-            : 'Carefully examine this PC screen capture. Describe what application, document, website, or window is currently displayed on the screen. If there are any code problems, errors, or questions visible, solve and explain them. If there are no questions or errors, give a clear overview of what is currently on the screen.');
+            ? `ഈ PC ${monitorLabel} പരിശോധിക്കുക. ക്വിസ് ചോദ്യങ്ങൾ (e.g. Mentimeter, MCQ, കോഡിംഗ്), പ്രശ്നങ്ങൾ ഉണ്ടെങ്കിൽ അവ കണ്ടെത്തി ശരിയായ ഉത്തരവും വിശദീകരണവും ഉടൻ നൽകുക. ചോദ്യങ്ങളോ കോഡോ ഇല്ലെങ്കിൽ സ്ക്രീനിൽ എന്താണ് കാണുന്നത് എന്ന് വ്യക്തമായി പറയുക.`
+            : `Carefully examine this PC ${monitorLabel} capture. If there are any quiz questions, interview problems (e.g. Mentimeter, multiple choice, code, questions), SOLVE them directly and give the precise answer immediately. If there are no questions or errors, give a clear overview of what is currently on the screen.`);
 
         const visionRes = await fetch('/api/chat', {
           method: 'POST',
@@ -233,7 +248,7 @@ export default function WinstonChat() {
 
         await db.chatMessages.add({
           role: 'assistant',
-          content: `🖥️ **Desktop Screen Intelligence:**\n\n${analysis}`,
+          content: `🖥️ **${monitorLabel} Intelligence:**\n\n${analysis}`,
           timestamp: new Date().toISOString(),
           sessionId,
           hasScreenshot: true,
@@ -535,7 +550,55 @@ export default function WinstonChat() {
         </div>
 
         {/* Input Bar */}
-        <div className="border-t border-white/[0.08] p-3 bg-[#111111]">
+        <div className="border-t border-white/[0.08] p-3 bg-[#111111] space-y-2">
+          {/* Target Display Selector when PC Agent is connected */}
+          {desktopStatus.online && (
+            <div className="flex items-center justify-between px-2 py-1 bg-[#0a0a0a] rounded-lg border border-white/[0.06] text-[10px] font-mono">
+              <div className="flex items-center gap-1.5 text-gray-400">
+                <Monitor className="w-3 h-3 text-emerald-400" />
+                <span>Target Display:</span>
+              </div>
+              <div className="flex items-center gap-1 bg-[#141414] p-0.5 rounded-md border border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMonitor('laptop')}
+                  className={`px-2 py-0.5 rounded text-[10px] transition flex items-center gap-1 ${
+                    selectedMonitor === 'laptop'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="Capture the Laptop Display (your testing screen)"
+                >
+                  💻 Laptop (Testing)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMonitor('all')}
+                  className={`px-2 py-0.5 rounded text-[10px] transition flex items-center gap-1 ${
+                    selectedMonitor === 'all'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="Stitch and capture both monitors side-by-side"
+                >
+                  🖼️ Both Screens
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMonitor('external')}
+                  className={`px-2 py-0.5 rounded text-[10px] transition flex items-center gap-1 ${
+                    selectedMonitor === 'external'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  title="Capture the External Monitor"
+                >
+                  🖥️ External Monitor
+                </button>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSend} className="flex items-end gap-2">
             {/* Direct Screen Inspect Trigger */}
             <button

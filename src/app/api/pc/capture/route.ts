@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requestCapture } from '../heartbeat/route';
 
 // In-memory screenshot storage (single user, single screenshot at a time)
@@ -8,16 +8,27 @@ let captureStatus: 'idle' | 'pending' | 'ready' = 'idle';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  let targetMonitor = 'laptop';
+  try {
+    const body = await request.json() as { monitor?: string };
+    if (body?.monitor) {
+      targetMonitor = body.monitor;
+    }
+  } catch {
+    // Body is optional
+  }
+
   // Mobile app requests a capture
-  requestCapture();
+  requestCapture(targetMonitor);
   captureStatus = 'pending';
   latestScreenshot = null;
   screenshotTimestamp = null;
 
   return NextResponse.json({
     status: 'capture_requested',
-    message: 'Screenshot capture signal sent to desktop agent.',
+    target_monitor: targetMonitor,
+    message: `Screenshot capture signal for '${targetMonitor}' sent to desktop agent.`,
   });
 }
 
