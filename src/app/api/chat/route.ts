@@ -21,24 +21,76 @@ export async function POST(request: NextRequest) {
 
     // Vision mode: analyze screenshot
     if (screenshot && screenQuestion) {
-      const visionMessages: Array<{
-        role: 'system' | 'user';
-        content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
-      }> = [
-        { role: 'system', content: getVisionSystemPrompt(language) },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: screenQuestion },
-            {
-              type: 'image_url',
-              image_url: { url: `data:image/jpeg;base64,${screenshot}` },
-            },
-          ],
-        },
-      ];
+      const systemPrompt = getVisionSystemPrompt(language);
 
       try {
+        const openRouterKey = process.env.OPENROUTER_API_KEY;
+
+        // Ultra-fast multimodal inference via Gemini 2.5 Flash on OpenRouter (1.6s response time)
+        if (openRouterKey) {
+          try {
+            const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${openRouterKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://winston.ai',
+                'X-Title': 'Winston Personal AI',
+              },
+              body: JSON.stringify({
+                model: 'google/gemini-2.5-flash',
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  {
+                    role: 'user',
+                    content: [
+                      { type: 'text', text: screenQuestion },
+                      {
+                        type: 'image_url',
+                        image_url: { url: `data:image/jpeg;base64,${screenshot}` },
+                      },
+                    ],
+                  },
+                ],
+                max_tokens: 2048,
+                temperature: 0.2,
+              }),
+            });
+
+            if (orRes.ok) {
+              const data = (await orRes.json()) as {
+                choices?: Array<{ message?: { content?: string } }>;
+              };
+              const content = data.choices?.[0]?.message?.content;
+              if (content) {
+                return NextResponse.json({ response: content });
+              }
+            } else {
+              console.warn('OpenRouter vision HTTP error:', orRes.status);
+            }
+          } catch (orErr) {
+            console.warn('OpenRouter vision error, falling back to Groq:', orErr);
+          }
+        }
+
+        // Secondary fallback to Groq vision
+        const visionMessages: Array<{
+          role: 'system' | 'user';
+          content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
+        }> = [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: screenQuestion },
+              {
+                type: 'image_url',
+                image_url: { url: `data:image/jpeg;base64,${screenshot}` },
+              },
+            ],
+          },
+        ];
+
         const visionResponse = await groqClient.chat.completions.create({
           model: VISION_MODEL,
           messages: visionMessages as Parameters<typeof groqClient.chat.completions.create>[0]['messages'],
