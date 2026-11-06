@@ -245,6 +245,7 @@ def start_silent_agent() -> None:
     exe_to_use = str(pythonw) if pythonw.exists() else sys.executable
 
     agent_script = str(Path(__file__).resolve())
+    cmd = [exe_to_use, agent_script, "run"]
     flags = 0
     if sys.platform == "win32":
         flags = subprocess.CREATE_NO_WINDOW | getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
