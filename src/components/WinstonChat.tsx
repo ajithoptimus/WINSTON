@@ -342,7 +342,7 @@ export default function WinstonChat() {
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#e38b6c] to-transparent" />
 
         {/* Chat Control Header */}
-        <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between bg-[#111111]/90 backdrop-blur-md">
+        <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between bg-[#111111]/90 backdrop-blur-md shrink-0">
           {/* Left: Bot Identity */}
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl blick-gradient-bg p-[1px] shadow-lg shadow-[#e38b6c]/20">
@@ -428,7 +428,7 @@ export default function WinstonChat() {
         </div>
 
         {/* Message Feed Area */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5 custom-scrollbar bg-[#090909]/40">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3.5 custom-scrollbar bg-[#090909]/40">
           {(!messages || messages.length === 0) && (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-8">
               <div className="w-14 h-14 rounded-2xl blick-gradient-bg p-[1px] shadow-xl shadow-[#e38b6c]/20">
@@ -558,10 +558,10 @@ export default function WinstonChat() {
         </div>
 
         {/* Input Bar */}
-        <div className="border-t border-white/[0.08] p-3 bg-[#111111] space-y-2">
+        <div className="border-t border-white/[0.08] p-3 bg-[#111111] space-y-2 shrink-0">
           {/* Target Display Selector when PC Agent is connected */}
           {desktopStatus.online && (
-            <div className="flex items-center justify-between px-2 py-1 bg-[#0a0a0a] rounded-lg border border-white/[0.06] text-[10px] font-mono">
+            <div className="flex flex-wrap items-center justify-between gap-1 px-2 py-1 bg-[#0a0a0a] rounded-lg border border-white/[0.06] text-[10px] font-mono">
               <div className="flex items-center gap-1.5 text-gray-400">
                 <Monitor className="w-3 h-3 text-emerald-400" />
                 <span>Target Display:</span>

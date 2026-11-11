@@ -1,4 +1,4 @@
-const CACHE_NAME = 'winston-v2-cache-v3';
+const CACHE_NAME = 'winston-v2-cache-v4';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -38,9 +38,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first for API routes - never cache API responses
-  if (event.request.url.includes('/api/')) {
-    event.respondWith(fetch(event.request));
+  // Network first for API routes and Next.js JS/CSS chunks so UI updates appear immediately
+  if (event.request.url.includes('/api/') || event.request.url.includes('/_next/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200 && event.request.url.includes('/_next/static/')) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
 

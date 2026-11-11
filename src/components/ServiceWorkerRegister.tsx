@@ -9,7 +9,10 @@ export default function ServiceWorkerRegister() {
       if ('caches' in window) {
         caches.keys().then((keys) => {
           keys.forEach((key) => {
-            if (key.includes('directive-os')) {
+            if (
+              key.includes('directive-os') ||
+              (key.startsWith('winston-v2-cache-') && key !== 'winston-v2-cache-v4')
+            ) {
               caches.delete(key);
             }
           });
