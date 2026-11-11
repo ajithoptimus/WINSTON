@@ -41,6 +41,7 @@ export default function WinstonChat() {
   const [isPCModalOpen, setIsPCModalOpen] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -298,7 +299,14 @@ export default function WinstonChat() {
 
   const handleClearChat = async () => {
     stopWinstonSpeech();
+    setSpeakingMessageId(null);
     await db.chatMessages.where('sessionId').equals(sessionId).delete();
+  };
+
+  const handleRefreshScreen = () => {
+    setIsRefreshing(true);
+    stopWinstonSpeech();
+    window.location.reload();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -655,6 +663,38 @@ export default function WinstonChat() {
               <Send className="w-4 h-4" />
             </button>
           </form>
+
+          {/* Bottom Utility Controls: Clear Window & Refresh Screen */}
+          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-white/[0.06] text-[10px] font-mono">
+            <button
+              type="button"
+              onClick={handleClearChat}
+              className={`flex-1 py-1.5 px-3 rounded-lg bg-[#0a0a0a] border border-white/[0.08] hover:text-rose-300 hover:border-rose-500/40 hover:bg-rose-500/10 transition flex items-center justify-center gap-1.5 font-semibold ${
+                !messages || messages.length === 0 ? 'text-gray-500' : 'text-gray-300'
+              }`}
+              title="Immediately clear current chat from the Winston window"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>
+                {language === 'malayalam' ? 'വിൻസ്റ്റൺ വിൻഡോ ക്ലിയർ ചെയ്യുക' : 'Clear Winston Window'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleRefreshScreen}
+              disabled={isRefreshing}
+              className="flex-1 py-1.5 px-3 rounded-lg bg-[#0a0a0a] border border-white/[0.08] text-gray-300 hover:text-cyan-300 hover:border-cyan-500/40 hover:bg-cyan-500/10 disabled:opacity-50 transition flex items-center justify-center gap-1.5 font-semibold"
+              title="Refresh the current Winston screen"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-cyan-400' : ''}`}
+              />
+              <span>
+                {language === 'malayalam' ? 'സ്ക്രീൻ റിഫ്രഷ് ചെയ്യുക' : 'Refresh Screen'}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
